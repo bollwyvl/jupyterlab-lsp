@@ -40,12 +40,6 @@ jobs:
               - script: ${{ platform.activate }} && cd ci && python env_template.py "${{ python.spec }}"
                 displayName: update environment with python version
 
-              - task: CacheBeta@0
-                inputs:
-                  key: conda | $(Agent.OS) | env-test.yml
-                  path: $(CONDA_PKGS_DIRS)
-                displayName: restore cached conda packages
-
               - script: conda env update -n jupyterlab-lsp --file env-test.yml --quiet
                 displayName: update conda environment with test dependencies
 

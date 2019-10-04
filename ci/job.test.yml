@@ -10,15 +10,10 @@ parameters:
       vmImage: vs2017-win2016
       activate: call activate
   pythons:
-    - name: ThreeFive
-      spec: ">=3.5,<3.6.0a0"
     - name: ThreeSix
       spec: ">=3.6,<3.7.0a0"
     - name: ThreeSeven
       spec: ">=3.7,<3.8.0a0"
-    # TODO: test in 3.8 when available
-    # - name: ThreeEight
-    #   spec: ">=3.8,<3.9.0a0"
 
 jobs:
   - ${{ each platform in parameters.platforms }}:
@@ -27,26 +22,23 @@ jobs:
         pool:
           vmImage: ${{ platform.vmImage }}
         steps:
-          - ${{ if eq(parameters.name, 'Linux') }}:
+          - ${{ if eq(platform.name, 'Linux') }}:
             - bash: echo "##vso[task.prependpath]$CONDA/bin"
               displayName: conda $PATH
 
-          - ${{ if eq(parameters.name, 'MacOSX') }}:
+          - ${{ if eq(platform.name, 'MacOSX') }}:
             - bash: echo "##vso[task.prependpath]$CONDA/bin"
               displayName: conda $PATH
 
             - bash: sudo chown -R $USER $CONDA
               displayName: own conda
 
-          - ${{ if eq(parameters.name, 'Windows') }}:
+          - ${{ if eq(platform.name, 'Windows') }}:
             - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
               displayName: conda %PATH%
 
-          - script: conda create -n jupyterlab-lsp -c conda-forge 'python${{ python.spec }}'
-            displayName: create conda environment with just python
-
-          - script: conda env update -n jupyterlab-lsp --file ci/env-test.yml --quiet
-            displayName: update conda environment with test dependencies
+          - script: python -c 'from pathlib import Path; ci = Path("ci"); (ci / "env-test.yml").write_text(ci / "env-test.yml.in").read_text().format("${{ python.spec }}"))'
+            displayName: update environment with python version
 
           - script: conda env update -n jupyterlab-lsp --file ci/env-test.yml --quiet
             displayName: update conda environment with test dependencies

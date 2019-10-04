@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   # runtime dependencies
-  - python >=3.5
+  - python {}
   - jupyterlab >=1.1,<1.2
   # build dependencies
   - nodejs

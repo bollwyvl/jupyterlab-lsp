@@ -43,11 +43,14 @@ jobs:
                   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
                     displayName: conda %PATH%
 
-              - script: ${{ platform.activate }} && python env_template.py "${{ python.spec }}"
+              - script: ${{ platform.activate }} && cd ci && python env_template.py "${{ python.spec }}"
                 displayName: update environment with python version
 
               - script: conda env update -n jupyterlab-lsp --file ci/env-test.yml --quiet
                 displayName: update conda environment with test dependencies
+
+              - script: conda info && conda list -n jupyterlab-lsp
+                displayName: list conda packages and info
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jlpm
                 displayName: install npm dependencies

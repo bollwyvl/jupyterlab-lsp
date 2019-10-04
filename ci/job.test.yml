@@ -67,7 +67,7 @@ jobs:
               - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && python -m pip install jupyter_lsp-$(JLSP_VERSION)-py3-none-any.whl --no-deps
                 displayName: install python wheel
 
-              - script: ${{ platform.activate }} jupyterlab-lsp && jlpm test
+              - script: ${{ platform.activate }} jupyterlab-lsp && jlpm tslint:check && jlpm test:jest
                 displayName: run frontend unit tests
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter serverextension list

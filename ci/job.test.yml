@@ -22,6 +22,12 @@ jobs:
             pool:
               vmImage: ${{ platform.vmImage }}
             steps:
+              - task: CacheBeta@0
+                inputs:
+                  key: yarn | $(Agent.OS) | yarn.lock
+                  path: $(Pipeline.Workspace)/.yarn
+                displayName: cache yarn packages
+
               - ${{ if eq(platform.name, 'Linux') }}:
                   - bash: echo "##vso[task.prependpath]$CONDA/bin"
                     displayName: conda $PATH
@@ -55,7 +61,7 @@ jobs:
               - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && npm pack ..
                 displayName: build npm bundle
 
-              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && python -m pip install jupyter_lsp*.whl
+              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && python -m pip install jupyter_lsp*.whl --no-deps
                 displayName: install python wheel
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jlpm test

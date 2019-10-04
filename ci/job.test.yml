@@ -64,7 +64,7 @@ jobs:
               - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && npm pack ..
                 displayName: build npm bundle
 
-              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && python -m pip install jupyter_lsp*.whl --no-deps
+              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && python -m pip install jupyter_lsp-${JLSP_VERSION}-py3-none-any.whl --no-deps
                 displayName: install python wheel
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jlpm test
@@ -76,7 +76,7 @@ jobs:
               - script: ${{ platform.activate }} jupyterlab-lsp && python3 -m pytest --pyargs jupyter_lsp --cov jupyter_lsp --cov-report term-missing:skip-covered -p no:warnings --flake8 --cov-fail-under=100
                 displayName: run python tests
 
-              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && jupyter labextension install *jupyterlab-lsp*.tgz @krassowski/jupyterlab_go_to_definition
+              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && jupyter labextension install krassowski-jupyterlab-lsp-%JLSP_VERSION%.tgz @krassowski/jupyterlab_go_to_definition
                 displayName: build lab
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter labextension list

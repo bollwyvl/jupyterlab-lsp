@@ -11,6 +11,7 @@ pr:
 variables:
   PYTHONUNBUFFERED: 1
   YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
+  JLSP_VERSION: 0.5.0
 
 jobs:
   - template: ci/job.test.yml

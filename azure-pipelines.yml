@@ -1,0 +1,15 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+      - refs/tags/v*
+
+pr:
+  - master
+
+variables:
+  PYTHONUNBUFFERED: 1
+
+jobs:
+  - template: ci/job.test.yml

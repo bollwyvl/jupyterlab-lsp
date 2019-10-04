@@ -1,3 +1,7 @@
+variables:
+  YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn
+  CONDA_PKGS_DIRS: $(Pipeline.Workspace)/.conda
+
 parameters:
   platforms:
     - name: Linux
@@ -22,12 +26,6 @@ jobs:
             pool:
               vmImage: ${{ platform.vmImage }}
             steps:
-              - task: CacheBeta@0
-                inputs:
-                  key: yarn | $(Agent.OS) | yarn.lock
-                  path: $(Pipeline.Workspace)/.yarn
-                displayName: cache yarn packages
-
               - ${{ if eq(platform.name, 'Linux') }}:
                   - bash: echo "##vso[task.prependpath]$CONDA/bin"
                     displayName: conda $PATH
@@ -46,11 +44,23 @@ jobs:
               - script: ${{ platform.activate }} && cd ci && python env_template.py "${{ python.spec }}"
                 displayName: update environment with python version
 
-              - script: conda env update -n jupyterlab-lsp --file ci/env-test.yml --quiet
+              - task: CacheBeta@0
+                inputs:
+                  key: conda | $(Agent.OS) | env-test.yml
+                  path: $(CONDA_PKGS_DIRS)
+                displayName: restore cached conda packages
+
+              - script: conda env update -n jupyterlab-lsp --file env-test.yml --quiet
                 displayName: update conda environment with test dependencies
 
               - script: conda info && conda list -n jupyterlab-lsp
                 displayName: list conda packages and info
+
+              - task: CacheBeta@0
+                inputs:
+                  key: yarn | $(Agent.OS) | yarn.lock
+                  path: $(YARN_CACHE_FOLDER)
+                displayName: restore cached yarn packages
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jlpm
                 displayName: install npm dependencies

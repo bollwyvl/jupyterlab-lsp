@@ -28,4 +28,4 @@ envs
 **/.ipynb_checkpoints
 **/*.egg-info
 .yarn-packages
-ci/env-test.yml
+**/env-test.yml

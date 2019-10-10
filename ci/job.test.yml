@@ -94,10 +94,10 @@ jobs:
                     displayName: set up test output
 
               - script: ${{ platform.activate }} jupyterlab-lsp && cd atest && cd output && robot ..
-                displayName: set up test output
+                displayName: run browser tests
 
               - task: PublishPipelineArtifact@0
-                displayName: publish robot output
+                displayName: publish browser test output
                 inputs:
                   targetPath: atest/output
                   artifactName: Robot ${{ platform.name }}${{ python.name }}

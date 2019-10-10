@@ -8,8 +8,10 @@ Library   String
 
 *** Keywords ***
 Setup Server and Browser
+    ${accel} =  Evaluate    "COMMAND" if __import__("sys").platform == "darwin" else "CTRL"
+    Set Global Variable  ${ACCEL}  ${accel}
     ${token} =   Generate Random String
-    Set Suite Variable   ${TOKEN}   ${token}
+    Set Global Variable   ${TOKEN}   ${token}
     ${home} =  Set Variable  ${OUTPUT DIR}${/}home
     Create Directory   ${home}
     ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}'
@@ -55,7 +57,7 @@ Reset Application State
 
 Lab Command
     [Arguments]  ${cmd}
-    Press Keys  id:main  CTRL+SHIFT+c
+    Press Keys  id:main  ${ACCEL}+SHIFT+c
     ${cmd input} =  Set Variable  css:.p-CommandPalette-input
     Wait Until Page Contains Element  ${cmd input}
     Input Text  ${cmd input}   ${cmd}

@@ -1,6 +1,6 @@
 *** Settings ***
-Resource  Keywords.robot
+Resource          Keywords.robot
 
 *** Test Cases ***
 Smoke
-    Capture Page Screenshot   00-splash.png
+    Capture Page Screenshot    00-splash.png

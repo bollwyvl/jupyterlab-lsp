@@ -39,25 +39,7 @@ class Reader(StdIOBase):
         exponential backoff is used.
     """
 
-    max_wait = Float(2.0, help="maximum time to wait on idle stream").tag(config=True)
-    min_wait = Float(0.05, help="minimum time to wait on idle stream").tag(config=True)
-    next_wait = Float(0.05, help="next time to wait on idle stream").tag(config=True)
-
-    async def sleep(self):
-        """ Simple exponential backoff for sleeping
-        """
-        if self.stream.closed:  # pragma: no cover
-            return
-        self.next_wait = min(self.next_wait * 2, self.max_wait)
-        try:
-            await asyncio.sleep(self.next_wait)
-        except Exception:  # pragma: no cover
-            pass
-
-    def wake(self):
-        """ Reset the wait time
-        """
-        self.wait = self.min_wait
+    poll_interval = Float(0.05, help="time to wait on idle stream").tag(config=True)
 
     async def read(self) -> None:
         """ Read from a Language Server until it is closed
@@ -70,10 +52,8 @@ class Reader(StdIOBase):
                 message = self.read_one()
 
                 if not message:
-                    await self.sleep()
+                    await asyncio.sleep(self.poll_interval)
                     continue
-                else:
-                    self.wake()
 
                 await self.queue.put(message)
             except Exception:  # pragma: no cover

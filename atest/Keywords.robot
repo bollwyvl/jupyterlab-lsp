@@ -13,11 +13,13 @@ Setup Server and Browser
     ${token} =   Generate Random String
     Set Global Variable   ${TOKEN}   ${token}
     ${home} =  Set Variable  ${OUTPUT DIR}${/}home
+    ${root} =  Normalize Path  ${OUTPUT DIR}${/}..${/}..
     Create Directory   ${home}
     ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}'
     ${path args} =  Set Variable   --LabApp.user_settings_dir='${OUTPUT DIR}${/}settings' --LabApp.workspaces_dir\='${OUTPUT DIR}${/}workspaces'
+    ${ext args} =  Set Variable  --LanguageServerManager.extra_node_roots='["${root}"]'
     Set Screenshot Directory   ${OUTPUT DIR}${/}screenshots
-    ${server} =  Start Process  jupyter-lab ${app args} ${path args}
+    ${server} =  Start Process  jupyter-lab ${app args} ${path args} ${ext args}
     ...  shell=yes
     ...  env:HOME=${home}
     ...  cwd=${home}

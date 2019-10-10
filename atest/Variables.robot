@@ -1,5 +1,4 @@
 *** Variables ***
-${BROWSER}  headlessfirefox
 ${PORT}  18888
 ${SPLASH}  id:jupyterlab-splash
 ${BASE}   /@est/

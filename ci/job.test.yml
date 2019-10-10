@@ -84,3 +84,21 @@ jobs:
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter labextension list
                 displayName: list labextensions
+
+              - ${{ if eq(platform.name, 'Windows') }}:
+                - script: md atest\output
+                  displayName: set up test output
+
+              - ${{ if not(eq(platform.name, 'Windows')) }}:
+                - script: mkdir atest/output
+                  displayName: set up test output
+
+              - script: ${{ platform.activate }} jupyterlab-lsp && cd atest && cd output && robot ..
+                displayName: set up test output
+
+              - task: PublishPipelineArtifact@0
+                displayName: publish robot output
+                inputs:
+                  targetPath: atest/output
+                  artifactName: Robot ${{ platform.name }}${{ python.name }}
+                condition: always()

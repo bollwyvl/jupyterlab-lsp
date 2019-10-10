@@ -86,12 +86,12 @@ jobs:
                 displayName: list labextensions
 
               - ${{ if eq(platform.name, 'Windows') }}:
-                - script: md atest\output
-                  displayName: set up test output
+                  - script: md atest\output
+                    displayName: set up test output
 
               - ${{ if not(eq(platform.name, 'Windows')) }}:
-                - script: mkdir atest/output
-                  displayName: set up test output
+                  - script: mkdir atest/output
+                    displayName: set up test output
 
               - script: ${{ platform.activate }} jupyterlab-lsp && cd atest && cd output && robot ..
                 displayName: set up test output

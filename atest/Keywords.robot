@@ -15,26 +15,26 @@ Setup Server and Browser
     ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}'
     ${path args} =  Set Variable   --LabApp.user_settings_dir='${OUTPUT DIR}${/}settings' --LabApp.workspaces_dir\='${OUTPUT DIR}${/}workspaces'
     Set Screenshot Directory   ${OUTPUT DIR}${/}screenshots
-    Start Process  jupyter-lab ${app args} ${path args}
+    ${server} =  Start Process  jupyter-lab ${app args} ${path args}
     ...  shell=yes
     ...  env:HOME=${home}
     ...  cwd=${home}
     ...  stdout=${OUTPUT DIR}${/}lab.log
     ...  stderr=STDOUT
+    Set Global Variable    ${SERVER}    ${server}
     Open JupyterLab
 
 Tear Down Everything
     Close All Browsers
-    Terminate All Processes
-    Terminate All Processes
-    Terminate All Processes  kill=${True}
+    Evaluate  __import__("urllib.request").request.urlopen("${URL}api/shutdown?token=${TOKEN}", data=[])
+    Wait For Process   ${SERVER}
 
 Wait For Splash
     Wait Until Page Contains Element   ${SPLASH}   timeout=30s
     Wait Until Page Does Not Contain Element   ${SPLASH}
 
 Open JupyterLab
-    Open Browser  ${URL}?token=${TOKEN}  browser=${BROWSER}
+    Open Browser  ${URL}lab?token=${TOKEN}  browser=${BROWSER}
     Set Window Size  1024  768
     Wait For Splash
     Execute Javascript    window.onbeforeunload \= function (){}

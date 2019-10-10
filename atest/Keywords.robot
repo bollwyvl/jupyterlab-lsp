@@ -27,14 +27,20 @@ Setup Server and Browser
 Tear Down Everything
     Close All Browsers
     Evaluate  __import__("urllib.request").request.urlopen("${URL}api/shutdown?token=${TOKEN}", data=[])
-    Wait For Process   ${SERVER}
+    Wait For Process   ${SERVER}  timeout=30s
+    Terminate All Processes
+    Terminate All Processes  kill=${True}
 
 Wait For Splash
     Wait Until Page Contains Element   ${SPLASH}   timeout=30s
     Wait Until Page Does Not Contain Element   ${SPLASH}
 
 Open JupyterLab
-    Open Browser  ${URL}lab?token=${TOKEN}  browser=${BROWSER}
+    Set Environment Variable    MOZ_HEADLESS    ${HEADLESS}
+    ${firefox} =  Which  firefox
+    ${geckodriver} =  Which  geckodriver
+    Create WebDriver    Firefox    executable_path=${geckodriver}    firefox_binary=${firefox}
+    Go To  ${URL}lab?token=${TOKEN}
     Set Window Size  1024  768
     Wait For Splash
     Execute Javascript    window.onbeforeunload \= function (){}
@@ -56,3 +62,8 @@ Lab Command
     ${cmd item} =  Set Variable   css:.p-CommandPalette-item.p-mod-active
     Wait Until Page Contains Element    ${cmd item}
     Click Element  ${cmd item}
+
+Which
+    [Arguments]  ${cmd}
+    ${path} =  Evaluate    __import__("shutil").which("${cmd}")
+    [Return]  ${path}

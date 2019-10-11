@@ -42,4 +42,4 @@ jobs:
         displayName: publish all output
         inputs:
           targetPath: atest/output
-          artifactName: All Robot Output
+          artifactName: All Robot Output $(Build.BuildId)

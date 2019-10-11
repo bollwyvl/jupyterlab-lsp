@@ -63,12 +63,14 @@ jobs:
                 displayName: publish frontend test results
                 inputs:
                   testResultsFiles: junit.xml
+                  testRunTitle: 'Jest ${{ platform.name }}${{ python.name }}'
+                  mergeTestResults: true
                 condition: always()
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter serverextension list
                 displayName: list server extensions
 
-              - script: ${{ platform.activate }} jupyterlab-lsp && python scripts/utest.py
+              - script: ${{ platform.activate }} jupyterlab-lsp && python scripts/utest.py --test-run-title="Pytest ${{ platform.name }}${{ python.name }}"
                 displayName: run python tests
 
               - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && jupyter labextension install krassowski-jupyterlab-lsp-$(JLSP_VERSION).tgz @krassowski/jupyterlab_go_to_definition
@@ -84,11 +86,13 @@ jobs:
                 displayName: publish browser test results
                 inputs:
                   testResultsFiles: atest/output/*.xunit.xml
+                  testRunTitle: 'Robot ${{ platform.name }}${{ python.name }}'
+                  mergeTestResults: true
                 condition: always()
 
               - task: PublishPipelineArtifact@0
                 displayName: publish browser test output
                 inputs:
                   targetPath: atest/output
-                  artifactName: Robot ${{ platform.name }}${{ python.name }}
+                  artifactName: Robot ${{ platform.name }}${{ python.name }} $(Build.BuildId)
                 condition: always()

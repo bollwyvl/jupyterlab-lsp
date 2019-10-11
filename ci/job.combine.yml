@@ -25,11 +25,11 @@ jobs:
         displayName: get robotframework
 
       - ${{ each platform in parameters.platforms }}:
-          - ${{ each product in parameters.products }}:
+          - ${{ each python in parameters.pythons }}:
               - task: DownloadPipelineArtifact@0
                 condition: always()
                 inputs:
-                  artifactName: Robot ${{ platform }}${{ python }}
+                  artifactName: Robot ${{ platform }}${{ python }} $(Build.BuildId)
                   targetPath: atest/output
                 displayName: restore ${{ platform }}${{ python }} output
 

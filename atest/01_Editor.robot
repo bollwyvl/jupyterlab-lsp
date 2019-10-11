@@ -10,8 +10,14 @@ ${MENU OPEN WITH}    xpath://div[contains(@class, 'p-Menu-itemLabel')][contains(
 Bash
     Editor Shows Features for Language    Bash    example.sh    Diagnostics
 
+CSS
+    Editor Shows Features for Language    CSS    example.css    Diagnostics
+
 Docker
     Editor Shows Features for Language    Docker    Dockerfile    Diagnostics
+
+JS
+    Editor Shows Features for Language    JS    example.js    Diagnostics
 
 JSON
     Editor Shows Features for Language    JSON    example.json    Diagnostics
@@ -21,6 +27,12 @@ Python
 
 R
     Editor Shows Features for Language    R    example.R    Diagnostics
+
+SCSS
+    Editor Shows Features for Language    SCSS    example.scss    Diagnostics
+
+TypeScript
+    Editor Shows Features for Language    TypeScript    example.ts    Diagnostics
 
 YAML
     Editor Shows Features for Language    YAML    example.yaml    Diagnostics

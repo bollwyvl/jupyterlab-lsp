@@ -52,7 +52,10 @@ class Reader(StdIOBase):
                 message = self.read_one()
 
                 if not message:
-                    await asyncio.sleep(self.poll_interval)
+                    try:
+                        await asyncio.sleep(self.poll_interval)
+                    except Exception:  # pragma: no cover
+                        pass
                     continue
 
                 await self.queue.put(message)

@@ -29,8 +29,16 @@ class StdIOBase(LoggingConfigurable):
     stream = Instance(io.BufferedIOBase, help="the stream to read/write")
     queue = Instance(Queue, help="queue to get/put")
 
+    def __unicode__(self):  # pragma: no cover
+        return "<{}(parent={})>".format(self.__class__.__name__, self.parent)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.log.debug("%s initialized", self)
+
     def close(self):
         self.stream.close()
+        self.log.debug("%s closed", self)
 
 
 class Reader(StdIOBase):
@@ -82,7 +90,7 @@ class Reader(StdIOBase):
 
                 await self.queue.put(message)
             except Exception:  # pragma: no cover
-                self.log.exception("[Reader] Couldn't enqueue message: %s", message)
+                self.log.exception("%s couldn't enqueue message: %s", self, message)
                 await self.sleep()
 
     def read_one(self) -> Text:
@@ -101,7 +109,13 @@ class Reader(StdIOBase):
             content_length = int(headers.get("content-length", "0"))
 
             if content_length:
-                message = self.stream.read(content_length).decode("utf-8").strip()
+                raw = self.stream.read(content_length)
+                if raw is None:  # pragma: no cover
+                    self.log.warning(
+                        "s failed to read message of length %s", content_length, self
+                    )
+                else:
+                    message = raw.decode("utf-8").strip()
 
         return message
 
@@ -129,6 +143,6 @@ class Writer(StdIOBase):
                 self.stream.write(response.encode("utf-8"))
                 self.stream.flush()
             except Exception:  # pragma: no cover
-                self.log.exception("[Writer] Couldn't write message: %s", response)
+                self.log.exception("s couldn't write message: %s", self, response)
             finally:
                 self.queue.task_done()

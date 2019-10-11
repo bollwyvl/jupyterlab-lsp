@@ -51,6 +51,11 @@ class LanguageServerSession(LoggingConfigurable):
         super().__init__(*args, **kwargs)
         atexit.register(self.stop)
 
+    def __unicode__(self):  # pragma: no cover
+        return "<LanguageServerSession(languages={}, argv={})>".format(
+            self.languages, self.argv
+        )
+
     def initialize(self):
         """ (re)initialize a language server session
         """

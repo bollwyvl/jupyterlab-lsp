@@ -23,6 +23,8 @@ jobs:
               vmImage: ${{ platform.vmImage }}
             steps:
               - template: steps.conda.yml
+                parameters:
+                  name: ${{ platform.name }}
 
               - script: ${{ platform.activate }} && cd ci && python env_template.py "${{ python.spec }}"
                 displayName: update environment with python version

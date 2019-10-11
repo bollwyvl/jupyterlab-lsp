@@ -76,7 +76,9 @@ class Reader(StdIOBase):
             content_length = int(headers.get("content-length", "0"))
 
             if content_length:
-                message = self.stream.read(content_length).decode("utf-8").strip()
+                message = (
+                    (self.stream.read(content_length) or b"").decode("utf-8").strip()
+                )
 
         return message
 

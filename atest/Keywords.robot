@@ -17,7 +17,7 @@ Setup Server and Browser
     Create Directory   ${home}
     ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}'
     ${path args} =  Set Variable   --LabApp.user_settings_dir='${OUTPUT DIR}${/}settings' --LabApp.workspaces_dir\='${OUTPUT DIR}${/}workspaces'
-    ${ext args} =  Set Variable  --LanguageServerManager.extra_node_roots='["${root}"]'
+    ${ext args} =  Set Variable  --LanguageServerManager.extra_node_roots="['${root}']"
     Set Screenshot Directory   ${OUTPUT DIR}${/}screenshots
     ${server} =  Start Process  jupyter-lab ${app args} ${path args} ${ext args}
     ...  shell=yes

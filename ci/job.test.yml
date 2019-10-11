@@ -67,6 +67,12 @@ jobs:
                   mergeTestResults: true
                 condition: always()
 
+              - task: PublishCodeCoverageResults@1
+                inputs:
+                  codeCoverageTool: Cobertura
+                  summaryFileLocation: 'coverage/coverage.xml'
+                  reportDirectory: 'coverage/lcov-report'
+
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter serverextension list
                 displayName: list server extensions
 

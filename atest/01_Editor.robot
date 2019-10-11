@@ -22,6 +22,12 @@ JS
 JSON
     Editor Shows Features for Language    JSON    example.json    Diagnostics
 
+JSX
+    Editor Shows Features for Language    JSX    example.jsx    Diagnostics
+
+Less
+    Editor Shows Features for Language    Less    example.less    Diagnostics
+
 Python
     Editor Shows Features for Language    Python    example.py    Diagnostics
 
@@ -30,6 +36,9 @@ R
 
 SCSS
     Editor Shows Features for Language    SCSS    example.scss    Diagnostics
+
+TSX
+    Editor Shows Features for Language    TSX    example.tsx    Diagnostics
 
 TypeScript
     Editor Shows Features for Language    TypeScript    example.ts    Diagnostics

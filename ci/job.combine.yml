@@ -18,6 +18,8 @@ jobs:
       vmImage: ubuntu-16.04
     steps:
       - template: steps.conda.yml
+        parameters:
+          packages: robotframework
 
       - script: conda install -yc conda-forge robotframework
         displayName: get robotframework

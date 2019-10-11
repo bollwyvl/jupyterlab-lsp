@@ -1,5 +1,5 @@
 *** Settings ***
-Default Tags      ui:editor
+Force Tags        ui:editor
 Resource          Keywords.robot
 
 *** Variables ***
@@ -51,7 +51,7 @@ Editor Shows Features for Language
     [Arguments]    ${Language}    ${file}    @{features}
     Set Tags    language:${Language.lower()}
     Set Screenshot Directory    ${OUTPUT DIR}${/}screenshots${/}editor${/}${Language.lower()}
-    Copy File    ..${/}examples${/}${file}    ${OUTPUT DIR}${/}home${/}${file}
+    Copy File    examples${/}${file}    ${OUTPUT DIR}${/}home${/}${file}
     Reset Application State
     Open ${file} in Editor
     FOR    ${f}    IN    @{features}

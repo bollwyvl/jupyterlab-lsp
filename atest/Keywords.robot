@@ -8,12 +8,12 @@ Library   String
 
 *** Keywords ***
 Setup Server and Browser
-    ${accel} =  Evaluate    "COMMAND" if __import__("sys").platform == "darwin" else "CTRL"
+    ${accel} =  Evaluate    "COMMAND" if "${OS}" == "Darwin" else "CTRL"
     Set Global Variable  ${ACCEL}  ${accel}
     ${token} =   Generate Random String
     Set Global Variable   ${TOKEN}   ${token}
     ${home} =  Set Variable  ${OUTPUT DIR}${/}home
-    ${root} =  Normalize Path  ${OUTPUT DIR}${/}..${/}..
+    ${root} =  Normalize Path  ${OUTPUT DIR}${/}..${/}..${/}..
     Create Directory   ${home}
     ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}'
     ${path args} =  Set Variable   --LabApp.user_settings_dir='${OUTPUT DIR}${/}settings' --LabApp.workspaces_dir\='${OUTPUT DIR}${/}workspaces'

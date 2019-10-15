@@ -15,9 +15,10 @@ Setup Server and Browser
     ${home} =  Set Variable  ${OUTPUT DIR}${/}home
     ${root} =  Normalize Path  ${OUTPUT DIR}${/}..${/}..${/}..
     Create Directory   ${home}
+    ${WORKSPACES DIR} =   Set Variable    ${OUTPUT DIR}${/}workspaces
     Initialize User Settings
     ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}'
-    ${path args} =  Set Variable   --LabApp.user_settings_dir='${SETTINGS DIR}' --LabApp.workspaces_dir\='${OUTPUT DIR}${/}workspaces'
+    ${path args} =  Set Variable   --LabApp.user_settings_dir='${SETTINGS DIR.replace('\\', '\\\\')}' --LabApp.workspaces_dir\='${WORKSPACES DIR.replace('\\', '\\\\')}'
     ${ext args} =  Set Variable  --LanguageServerManager.extra_node_roots\="['${root.replace('\\', '\\\\')}']"
     Set Screenshot Directory   ${OUTPUT DIR}${/}screenshots
     ${server} =  Start Process  jupyter-lab ${app args} ${path args} ${ext args}

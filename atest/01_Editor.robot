@@ -69,7 +69,7 @@ Editor Shows Features for Language
     Open ${file} in Editor
     FOR    ${f}    IN    @{features}
         Run Keyword If    "${f}" == "Diagnostics"    Editor Should Show Diagnostics    ${features["${f}"]}
-        ...    ELSE IF    "${f}" == "Jump to Definition"    Editor Should Jump To Definition    ${features["${f}"]}
+        ...    ELSE IF    "${f}" == "Jump to Definition"    Wait Until Keyword Succeeds    10 x    1 s   Editor Should Jump To Definition    ${features["${f}"]}
     END
     [Teardown]    Remove File    ${OUTPUT DIR}${/}home${/}${file}
 
@@ -90,7 +90,7 @@ Editor Should Jump To Definition
     [Arguments]    ${symbol}
     Set Tags    feature:jump-to-definition
     ${sel} =    Set Variable If    "${symbol}".startswith(("xpath", "css"))    ${symbol}    xpath:(//span[@role="presentation"][contains(., "${symbol}")])[last()]
-    Click Element    ${sel}
+    Click Element   ${sel}
     Open Context Menu    ${sel}
     Wait Until Page Contains Element    ${CM CURSORS}
     ${cursor} =    Get Vertical Position    ${CM CURSOR}
@@ -98,7 +98,7 @@ Editor Should Jump To Definition
     Mouse Over    ${MENU JUMP}
     Capture Page Screenshot    jump-to-definition-1.png
     Click Element    ${MENU JUMP}
-    Wait Until Keyword Succeeds    10 x    0.5 s    Cursor Should Jump    ${cursor}
+    Wait Until Keyword Succeeds    10 x    1 s    Cursor Should Jump    ${cursor}
     Capture Page Screenshot    jump-to-definition-2.png
 
 Cursor Should Jump

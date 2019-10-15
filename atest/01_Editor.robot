@@ -98,7 +98,7 @@ Editor Should Jump To Definition
     Mouse Over    ${MENU JUMP}
     Capture Page Screenshot    jump-to-definition-1.png
     Click Element    ${MENU JUMP}
-    Wait Until Keyword Succeeds    20 x    0.2 s    Cursor Should Jump    ${cursor}
+    Wait Until Keyword Succeeds    10 x    0.5 s    Cursor Should Jump    ${cursor}
     Capture Page Screenshot    jump-to-definition-2.png
 
 Cursor Should Jump

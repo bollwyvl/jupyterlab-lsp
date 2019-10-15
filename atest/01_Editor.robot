@@ -69,8 +69,7 @@ Editor Shows Features for Language
     Open ${file} in Editor
     FOR    ${f}    IN    @{features}
         Run Keyword If    "${f}" == "Diagnostics"    Editor Should Show Diagnostics    ${features["${f}"]}
-        ...    ELSE IF    "${f}" == "Jump to Definition"    Wait Until Keyword Succeeds    10 x    1 s
-        ...    Editor Should Jump To Definition    ${features["${f}"]}
+        ...    ELSE IF    "${f}" == "Jump to Definition"    Editor Should Jump To Definition    ${features["${f}"]}
     END
     [Teardown]    Remove File    ${OUTPUT DIR}${/}home${/}${file}
 

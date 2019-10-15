@@ -103,5 +103,6 @@ Editor Should Jump To Definition
 
 Cursor Should Jump
     [Arguments]    ${original}
+    Wait Until Page Contains Element    ${CM CURSORS}
     ${current} =    Get Vertical Position    ${CM CURSOR}
     Should Not Be Equal    ${original}    ${current}

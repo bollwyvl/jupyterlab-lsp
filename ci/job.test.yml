@@ -78,8 +78,8 @@ jobs:
               - script: ${{ platform.activate }} jupyterlab-lsp && python scripts/utest.py --test-run-title="Pytest ${{ platform.name }}${{ python.name }}"
                 displayName: run python tests
 
-              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && jupyter labextension install krassowski-jupyterlab-lsp-$(JLSP_VERSION).tgz @krassowski/jupyterlab_go_to_definition
-                displayName: build lab
+              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && jupyter labextension install krassowski-jupyterlab-lsp-$(JLSP_VERSION).tgz @krassowski/jupyterlab_go_to_definition --no-build
+                displayName: install labextensions
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter labextension list
                 displayName: list labextensions

@@ -17,7 +17,7 @@ Setup Server and Browser
     Create Directory   ${home}
     ${WORKSPACES DIR} =   Set Variable    ${OUTPUT DIR}${/}workspaces
     Initialize User Settings
-    ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}'
+    ${app args} =   Set Variable   --no-browser --debug --NotebookApp.base_url\='${BASE}' --port\=${PORT} --NotebookApp.token\='${token}' --watch
     ${path args} =  Set Variable   --LabApp.user_settings_dir='${SETTINGS DIR.replace('\\', '\\\\')}' --LabApp.workspaces_dir\='${WORKSPACES DIR.replace('\\', '\\\\')}'
     ${ext args} =  Set Variable  --LanguageServerManager.extra_node_roots\="['${root.replace('\\', '\\\\')}']"
     Set Screenshot Directory   ${OUTPUT DIR}${/}screenshots
@@ -42,7 +42,7 @@ Tear Down Everything
     Terminate All Processes  kill=${True}
 
 Wait For Splash
-    Wait Until Page Contains Element   ${SPLASH}   timeout=30s
+    Wait Until Page Contains Element   ${SPLASH}   timeout=120s
     Wait Until Page Does Not Contain Element   ${SPLASH}
 
 Open JupyterLab

@@ -92,8 +92,8 @@ Editor Should Jump To Definition
     ${sel} =    Set Variable If    "${symbol}".startswith(("xpath", "css"))    ${symbol}    xpath:(//span[@role="presentation"][contains(., "${symbol}")])[last()]
     Click Element    ${sel}
     Open Context Menu    ${sel}
-    ${cursor} =    Get Vertical Position    ${CM CURSOR}
     Wait Until Page Contains Element    ${CM CURSORS}
+    ${cursor} =    Get Vertical Position    ${CM CURSOR}
     Capture Page Screenshot    jump-to-definition-0.png
     Mouse Over    ${MENU JUMP}
     Capture Page Screenshot    jump-to-definition-1.png

@@ -70,8 +70,7 @@ jobs:
               - task: PublishCodeCoverageResults@1
                 inputs:
                   codeCoverageTool: Cobertura
-                  summaryFileLocation: 'coverage/clover.xml'
-                  reportDirectory: 'coverage/lcov-report'
+                  summaryFileLocation: 'coverage/cobertura-coverage.xml'
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter serverextension list
                 displayName: list server extensions

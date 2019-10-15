@@ -35,11 +35,11 @@ jobs:
               - script: conda info && conda list -n jupyterlab-lsp
                 displayName: list conda packages and info
 
-              - task: CacheBeta@0
-                inputs:
-                  key: yarn | $(Agent.OS) | yarn.lock
-                  path: $(YARN_CACHE_FOLDER)
-                displayName: restore cached yarn packages
+              # - task: CacheBeta@0
+              #   inputs:
+              #     key: yarn | $(Agent.OS) | yarn.lock
+              #     path: $(YARN_CACHE_FOLDER)
+              #   displayName: restore cached yarn packages
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jlpm
                 displayName: install npm dependencies
@@ -78,7 +78,7 @@ jobs:
               - script: ${{ platform.activate }} jupyterlab-lsp && python scripts/utest.py --test-run-title="Pytest ${{ platform.name }}${{ python.name }}"
                 displayName: run python tests
 
-              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && jupyter labextension install krassowski-jupyterlab-lsp-$(JLSP_VERSION).tgz @krassowski/jupyterlab_go_to_definition --no-build
+              - script: ${{ platform.activate }} jupyterlab-lsp && cd dist && jupyter labextension install krassowski-jupyterlab-lsp-$(JLSP_VERSION).tgz @krassowski/jupyterlab_go_to_definition
                 displayName: install labextensions
 
               - script: ${{ platform.activate }} jupyterlab-lsp && jupyter labextension list

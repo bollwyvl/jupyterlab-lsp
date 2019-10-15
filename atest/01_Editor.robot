@@ -98,7 +98,7 @@ Editor Should Jump To Definition
     Mouse Over    ${MENU JUMP}
     Capture Page Screenshot    jump-to-definition-1.png
     Click Element    ${MENU JUMP}
-    Sleep    0.1s
+    Sleep    1s
     Wait Until Page Contains Element    ${CM CURSORS}
     Capture Page Screenshot    jump-to-definition-2.png
     ${cursor after} =    Get Vertical Position    ${CM CURSOR}

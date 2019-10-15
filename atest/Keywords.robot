@@ -42,7 +42,7 @@ Tear Down Everything
     Terminate All Processes  kill=${True}
 
 Wait For Splash
-    Wait Until Page Contains Element   ${SPLASH}   timeout=120s
+    Wait Until Page Contains Element   ${SPLASH}   timeout=180s
     Wait Until Page Does Not Contain Element   ${SPLASH}
 
 Open JupyterLab

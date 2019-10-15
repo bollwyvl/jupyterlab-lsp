@@ -21,14 +21,14 @@ from traitlets.config import LoggingConfigurable
 from .non_blocking import make_non_blocking
 
 
-class StdIOBase(LoggingConfigurable):
+class LspStdIoBase(LoggingConfigurable):
     """ Non-blocking, queued base for communicating with stdio Language Servers
     """
 
     stream = Instance(io.BufferedIOBase, help="the stream to read/write")
     queue = Instance(Queue, help="queue to get/put")
 
-    def __unicode__(self):  # pragma: no cover
+    def __repr__(self):  # pragma: no cover
         return "<{}(parent={})>".format(self.__class__.__name__, self.parent)
 
     def __init__(self, **kwargs):
@@ -40,7 +40,7 @@ class StdIOBase(LoggingConfigurable):
         self.log.debug("%s closed", self)
 
 
-class Reader(StdIOBase):
+class LspStdIoReader(LspStdIoBase):
     """ Language Server stdio Reader
 
         Because non-blocking (but still synchronous) IO is used, rudimentary
@@ -79,7 +79,7 @@ class Reader(StdIOBase):
         while not self.stream.closed:
             message = None
             try:
-                message = self.read_one()
+                message = await self.read_one()
 
                 if not message:
                     await self.sleep()
@@ -92,7 +92,7 @@ class Reader(StdIOBase):
                 self.log.exception("%s couldn't enqueue message: %s", self, message)
                 await self.sleep()
 
-    def read_one(self) -> Text:
+    async def read_one(self) -> Text:
         """ Read a single message
         """
         message = ""
@@ -108,13 +108,21 @@ class Reader(StdIOBase):
             content_length = int(headers.get("content-length", "0"))
 
             if content_length:
-                raw = self.stream.read(content_length)
-                if raw is None:  # pragma: no cover
-                    self.log.warning(
-                        "s failed to read message of length %s", content_length, self
-                    )
-                else:
-                    message = raw.decode("utf-8").strip()
+                raw = None
+                retries = 5
+                while raw is None and retries:
+                    raw = self.stream.read(content_length)
+                    if raw is None:  # pragma: no cover
+                        self.log.warning(
+                            "%s failed to read message of length %s",
+                            content_length,
+                            self,
+                        )
+                        await self.sleep()
+                        retries -= 1
+                    else:
+                        message = raw.decode("utf-8").strip()
+                        break
 
         return message
 
@@ -127,7 +135,7 @@ class Reader(StdIOBase):
             return ""
 
 
-class Writer(StdIOBase):
+class LspStdIoWriter(LspStdIoBase):
     """ Language Server stdio Writer
     """
 

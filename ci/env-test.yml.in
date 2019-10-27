@@ -1,13 +1,14 @@
 name: jupyterlab-lsp
 
 channels:
+  - conda-forge/label/prerelease-jupyterlab
   - conda-forge
   - defaults
 
 dependencies:
   # runtime dependencies
   - python {}
-  - jupyterlab >=1.1,<1.2
+  - jupyterlab ==1.2.0rc0
   # build dependencies
   - nodejs
   # for python language server (and development)

@@ -1,0 +1,3 @@
+[submodule "vendor/jupyterlab-go-to-definition"]
+	path = vendor/jupyterlab-go-to-definition
+	url = https://github.com/bollwyvl/jupyterlab-go-to-definition.git

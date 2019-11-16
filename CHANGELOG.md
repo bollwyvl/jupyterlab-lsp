@@ -10,6 +10,20 @@
 - features
   - adds an API for registering new language server features
 
+## `jupyter-lsp` (unreleased)
+
+- features
+  - adds a language server status endpoint (
+    [#81](https://github.com/krassowski/jupyterlab-lsp/pull/81)
+    )
+  - adds more descriptive information to the language server spec (
+    [#90](https://github.com/krassowski/jupyterlab-lsp/pulls/100)
+    )
+  - adds an extensible listener API (
+    [#99](https://github.com/krassowski/jupyterlab-lsp/issues/99),
+    [#100](https://github.com/krassowski/jupyterlab-lsp/pulls/100)
+    )
+
 ## `@krassowski/jupyterlab-lsp 0.6.1`
 
 - features

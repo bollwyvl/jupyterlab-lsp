@@ -7,7 +7,7 @@ channels:
 dependencies:
   # runtime dependencies
   - python {}
-  - jupyterlab >=1.1,<1.2
+  - jupyterlab >=1.2,<1.3.0a0
   # build dependencies
   - nodejs
   # for python language server (and development)

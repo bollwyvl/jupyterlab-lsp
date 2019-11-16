@@ -60,7 +60,7 @@ Advanced static-analysis autocompletion without a running kernel
 
 ## Prerequisites
 
-- JupyterLab >=1.1,<1.2
+- jupyterlab >=1.2,<1.3.0a0
 - Python 3.5+
 - nodejs 8+
 

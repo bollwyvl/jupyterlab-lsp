@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## `@krassowski/jupyterlab-symbol-tree 0.7.0`
+
+- features
+  - supports navigating hierarchical symbols
+
+## `@krassowski/jupyterlab-lsp 0.7.0`
+
+- features
+  - adds an API for registering new language server features
+
 ## `@krassowski/jupyterlab-lsp 0.6.1`
 
 - features

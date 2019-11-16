@@ -10,9 +10,6 @@
   "references": [
     {
       "path": "../jupyterlab-lsp"
-    },
-    {
-      "path": "../jupyterlab-symbol-tree"
     }
   ]
 }

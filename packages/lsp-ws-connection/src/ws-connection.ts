@@ -122,12 +122,8 @@ export class LspWsConnection extends events.EventEmitter
     return this.documentInfo.documentUri;
   }
 
-  public sendInitialize() {
-    if (!this.isConnected) {
-      return;
-    }
-
-    const message: protocol.InitializeParams = {
+  public getInitializationParams(): protocol.InitializeParams {
+    return {
       capabilities: {
         textDocument: {
           hover: {
@@ -185,9 +181,18 @@ export class LspWsConnection extends events.EventEmitter
       rootUri: this.documentInfo.rootUri,
       workspaceFolders: null
     };
+  }
+
+  public sendInitialize() {
+    if (!this.isConnected) {
+      return;
+    }
 
     this.connection
-      .sendRequest<protocol.InitializeResult>('initialize', message)
+      .sendRequest<protocol.InitializeResult>(
+        'initialize',
+        this.getInitializationParams()
+      )
       .then(this.onServerInitialized.bind(this), e => {
         console.warn(e);
       });

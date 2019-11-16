@@ -102,6 +102,10 @@ export class DocumentConnectionManager {
       serverUri,
       rootUri,
       documentUri,
+      updateInitParams: init_params => {
+        console.log('could have updated', init_params);
+        return init_params;
+      },
       documentText: () => {
         // NOTE: Update is async now and this is not really used, as an alternative method
         // which is compatible with async is used.

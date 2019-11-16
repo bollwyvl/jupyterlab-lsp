@@ -12,11 +12,29 @@ import {
 import { CompletionTriggerKind } from './lsp';
 import { until_ready } from './utils';
 
-interface ILSPOptions extends ILspOptions {}
+export interface IInitializationUpdater {
+  (init_params: lsProtocol.InitializeParams): lsProtocol.InitializeParams;
+}
+
+interface ILSPOptions extends ILspOptions {
+  /**
+   * A callback which may return a transformed InitializeParams
+   */
+  updateInitParams?: IInitializationUpdater;
+}
 
 export class LSPConnection extends LspWsConnection {
+  protected update_init_params: IInitializationUpdater;
   constructor(options: ILSPOptions) {
     super(options);
+    this.update_init_params = options.updateInitParams;
+  }
+
+  public getInitializationParams(): lsProtocol.InitializeParams {
+    const init_params = super.getInitializationParams();
+    return this.update_init_params
+      ? this.update_init_params(init_params)
+      : init_params;
   }
 
   public sendSelectiveChange(

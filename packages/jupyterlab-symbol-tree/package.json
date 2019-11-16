@@ -34,7 +34,6 @@
     "watch": "tsc -b -w"
   },
   "dependencies": {
-    "@krassowski/jupyterlab-lsp": "^0.7.0"
   },
   "devDependencies": {
     "@jupyterlab/application": "~1.1.3",
@@ -44,7 +43,8 @@
   },
   "peerDependencies": {
     "@jupyterlab/application": "~1.1.3",
-    "react": "~16.8.4"
+    "react": "~16.8.4",
+    "@krassowski/jupyterlab-lsp": "^0.7.0"
   },
   "jupyterlab": {
     "extension": "lib/plugin.js",

@@ -1,6 +1,6 @@
 import { JupyterLabWidgetAdapter } from './jl_adapter';
 import { Notebook, NotebookPanel } from '@jupyterlab/notebook';
-import * as CodeMirror from 'codemirror';
+import CodeMirror from 'codemirror';
 import { VirtualEditorForNotebook } from '../../virtual/editors/notebook';
 import { ICompletionManager } from '@jupyterlab/completer';
 import { NotebookJumper } from '@krassowski/jupyterlab_go_to_definition/lib/jumpers/notebook';
@@ -13,6 +13,7 @@ import { language_specific_overrides } from '../../magics/defaults';
 import { foreign_code_extractors } from '../../extractors/defaults';
 import { Cell } from '@jupyterlab/cells';
 import { nbformat } from '@jupyterlab/coreutils';
+import { ILanguageServerManager } from '../../tokens';
 import ILanguageInfoMetadata = nbformat.ILanguageInfoMetadata;
 
 export class NotebookAdapter extends JupyterLabWidgetAdapter {
@@ -28,12 +29,14 @@ export class NotebookAdapter extends JupyterLabWidgetAdapter {
     editor_widget: NotebookPanel,
     jumper: NotebookJumper,
     app: JupyterFrontEnd,
+    lsp_manager: ILanguageServerManager,
     completion_manager: ICompletionManager,
     rendermime_registry: IRenderMimeRegistry,
     server_root: string
   ) {
     super(
       app,
+      lsp_manager,
       editor_widget,
       rendermime_registry,
       'completer:invoke-notebook',

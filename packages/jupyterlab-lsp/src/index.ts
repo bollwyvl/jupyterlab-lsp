@@ -147,6 +147,7 @@ const plugin: JupyterFrontEndPlugin<ILanguageServerManager> = {
           widget,
           jumper,
           app,
+          manager,
           completion_manager,
           rendermime_registry,
           server_root
@@ -169,6 +170,7 @@ const plugin: JupyterFrontEndPlugin<ILanguageServerManager> = {
         widget,
         jumper,
         app,
+        manager,
         completion_manager,
         rendermime_registry,
         server_root

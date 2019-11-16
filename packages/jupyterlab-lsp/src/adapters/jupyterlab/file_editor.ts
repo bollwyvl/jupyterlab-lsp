@@ -10,6 +10,7 @@ import { ICompletionManager } from '@jupyterlab/completer';
 import { LSPConnector } from './components/completion';
 import { CodeEditor } from '@jupyterlab/codeeditor';
 import { VirtualFileEditor } from '../../virtual/editors/file_editor';
+import { ILanguageServerManager } from '../../tokens';
 
 export class FileEditorAdapter extends JupyterLabWidgetAdapter {
   editor: FileEditor;
@@ -46,12 +47,14 @@ export class FileEditorAdapter extends JupyterLabWidgetAdapter {
     editor_widget: IDocumentWidget<FileEditor>,
     jumper: FileEditorJumper,
     app: JupyterFrontEnd,
+    lsp_manager: ILanguageServerManager,
     protected completion_manager: ICompletionManager,
     rendermime_registry: IRenderMimeRegistry,
     server_root: string
   ) {
     super(
       app,
+      lsp_manager,
       editor_widget,
       rendermime_registry,
       'completer:invoke-file',

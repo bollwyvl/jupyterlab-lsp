@@ -1,7 +1,9 @@
+import { Signal } from '@phosphor/signaling';
+
+import { PageConfig, PathExt } from '@jupyterlab/coreutils';
+
 import { VirtualDocument } from './virtual/document';
 import { LSPConnection } from './connection';
-import { Signal } from '@phosphor/signaling';
-import { PageConfig, PathExt } from '@jupyterlab/coreutils';
 import { sleep, until_ready } from './utils';
 
 export interface IDocumentConnectionData {
@@ -9,7 +11,7 @@ export interface IDocumentConnectionData {
   connection: LSPConnection;
 }
 
-interface ISocketConnectionOptions {
+export interface ISocketConnectionOptions {
   virtual_document: VirtualDocument;
   /**
    * The language identifier, corresponding to the API endpoint on the LSP proxy server.

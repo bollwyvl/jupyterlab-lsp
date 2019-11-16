@@ -27,11 +27,12 @@ import { CodeMirrorLSPFeature, ILSPFeature } from '../codemirror/feature';
 import { JumpToDefinition } from '../codemirror/features/jump_to';
 import { ICommandContext } from '../../command_manager';
 import { JSONObject } from '@phosphor/coreutils';
-import {
-  DocumentConnectionManager,
-  IDocumentConnectionData
-} from '../../connection_manager';
+import { IDocumentConnectionData } from '../../connection_manager';
 import { Rename } from '../codemirror/features/rename';
+import {
+  ILanguageServerManager,
+  IDocumentConnectionManager
+} from '../../tokens';
 
 export const lsp_features: Array<typeof CodeMirrorLSPFeature> = [
   Completion,
@@ -113,11 +114,12 @@ export abstract class JupyterLabWidgetAdapter
   >;
   protected abstract current_completion_connector: LSPConnector;
   private _tooltip: FreeTooltip;
-  public connection_manager: DocumentConnectionManager;
+  public connection_manager: IDocumentConnectionManager;
   public status_message: StatusMessage;
 
   protected constructor(
     protected app: JupyterFrontEnd,
+    protected lspManager: ILanguageServerManager,
     protected widget: IDocumentWidget,
     protected rendermime_registry: IRenderMimeRegistry,
     invoke: string,
@@ -128,7 +130,7 @@ export abstract class JupyterLabWidgetAdapter
     this.invoke_command = invoke;
     this.document_connected = new Signal(this);
     this.adapters = new Map();
-    this.connection_manager = new DocumentConnectionManager();
+    this.connection_manager = this.lspManager.makeConnectionManager();
     this.connection_manager.closed.connect((manger, { virtual_document }) => {
       console.log(
         'LSP: connection closed, disconnecting adapter',

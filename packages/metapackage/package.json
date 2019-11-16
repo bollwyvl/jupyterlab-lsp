@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "@krassowski/jupyterlab-lsp": "^0.7.0",
-    "@krassowski/jupyterlab-symbol-tree": "^0.7.0"
+    "@krassowski/jupyterlab-symbol-tree": "^0.7.0",
+    "lsp-ws-connection": "^0.2.0"
   },
   "devDependencies": {
     "fs-extra": "^8.0.1",

@@ -27,11 +27,9 @@
     "url": "https://github.com/krassowski/jupyterlab-lsp.git"
   },
   "scripts": {
-    "build": "tsc -b",
     "bundle": "npm pack .",
     "clean": "rimraf lib",
-    "lab:link": "jupyter labextension link . --no-build",
-    "watch": "tsc -b -w"
+    "lab:link": "jupyter labextension link . --no-build"
   },
   "dependencies": {
   },

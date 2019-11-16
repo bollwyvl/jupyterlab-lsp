@@ -1,0 +1,38 @@
+{
+  "name": "lsp-ws-connection",
+  "version": "0.2.0",
+  "description": "Utility for adapting editors to language server protocol",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "lab:link": "jupyter labextension link . --no-build",
+    "bundle": "npm pack .",
+    "clean": "rimraf lib"
+  },
+  "author": "Wylie Conlon",
+  "maintainers": [
+    "Michał Krassowski"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "lsp",
+    "languageserver"
+  ],
+  "homepage": "https://github.com/krassowski/lsp-ws-connection",
+  "repository": "github:krassowski/lsp-ws-connection",
+  "dependencies": {
+    "vscode-jsonrpc": "^4.0.0",
+    "vscode-languageclient": "^5.2.1",
+    "vscode-languageserver-protocol": "^3.14.1",
+    "vscode-languageserver-types": "^3.14.0",
+    "vscode-ws-jsonrpc": "0.1.1"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.3",
+    "typescript": "~3.7.2"
+  }
+}

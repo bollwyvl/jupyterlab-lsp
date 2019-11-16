@@ -13,6 +13,9 @@
     },
     {
       "path": "../jupyterlab-symbol-tree"
+    },
+    {
+      "path": "../lsp-ws-connection"
     }
   ]
 }

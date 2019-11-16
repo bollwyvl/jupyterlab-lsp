@@ -74,10 +74,10 @@ For the current stable version:
    pip install --pre jupyter-lsp
    ```
 
-2. install the frontend extension:
+2. install the frontend extensions:
 
    ```bash
-   jupyter labextension install @krassowski/jupyterlab-lsp
+   jupyter labextension install @krassowski/jupyterlab-lsp @krassowski/jupyterlab-symbol-tree
    ```
 
 3. install LSP servers for languages of your choice; for example, for Python

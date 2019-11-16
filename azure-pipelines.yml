@@ -17,6 +17,7 @@ variables:
 
   FIRST_PARTY_LABEXTENSIONS: >-
     packages/jupyterlab-lsp/krassowski-jupyterlab-lsp-$(JS_JLLSP_VERSION).tgz
+    packages/jupyterlab-lsp/krassowski-jupyterlab-symbol-tree-$(JS_JLLSP_VERSION).tgz
 
   THIRD_PARTY_LABEXTENSIONS: >-
     @krassowski/jupyterlab_go_to_definition

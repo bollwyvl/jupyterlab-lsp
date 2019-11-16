@@ -1,4 +1,4 @@
-// Copyright (c) Jupyter Development Team.
+// Copyright (c) jupyterlab-lsp contributors
 // Distributed under the terms of the Modified BSD License.
 
 import { Widget } from '@phosphor/widgets';
@@ -10,14 +10,14 @@ import { IWidgetTracker, MainAreaWidget } from '@jupyterlab/apputils';
 export const NS = '@krassowski/jupyterlab-symbol-tree';
 
 /**
- * A class that tracks editor widgets.
+ * A class that tracks symbol tree widgets.
  */
 export interface ISymbolTreeTracker
   extends IWidgetTracker<MainAreaWidget<ISymbolTree.ISymbolTree>> {}
 
 /* tslint:disable */
 /**
- * The editor tracker token.
+ * The symbol tree tracker token.
  */
 export const ISymbolTreeTracker = new Token<ISymbolTreeTracker>(
   `${NS}:ISymbolTreeTracker`

@@ -9,6 +9,10 @@ import { CodeMirrorEditor } from '@jupyterlab/codemirror';
 import { FileEditor, IEditorTracker } from '@jupyterlab/fileeditor';
 import { ISettingRegistry } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
+import { ICompletionManager } from '@jupyterlab/completer';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import { IStatusBar } from '@jupyterlab/statusbar';
+import { IDocumentWidget } from '@jupyterlab/docregistry/lib/registry';
 
 import { FileEditorJumper } from '@krassowski/jupyterlab_go_to_definition/lib/jumpers/fileeditor';
 import { NotebookJumper } from '@krassowski/jupyterlab_go_to_definition/lib/jumpers/notebook';
@@ -17,9 +21,9 @@ import { NotebookJumper } from '@krassowski/jupyterlab_go_to_definition/lib/jump
 // import 'codemirror/addon/hint/show-hint.css';
 // import 'codemirror/addon/hint/show-hint';
 import '../style/index.css';
+import { NS, ILanguageServerManager } from './tokens';
+import { LanguageServerManger } from './manager';
 
-import { ICompletionManager } from '@jupyterlab/completer';
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { NotebookAdapter } from './adapters/jupyterlab/notebook';
 import { FileEditorAdapter } from './adapters/jupyterlab/file_editor';
 import { lsp_features } from './adapters/jupyterlab/jl_adapter';
@@ -31,9 +35,7 @@ import {
   NotebookCommandManager
 } from './command_manager';
 import IPaths = JupyterFrontEnd.IPaths;
-import { IStatusBar } from '@jupyterlab/statusbar';
 import { LSPStatus } from './adapters/jupyterlab/components/statusbar';
-import { IDocumentWidget } from '@jupyterlab/docregistry/lib/registry';
 
 const lsp_commands: Array<IFeatureCommand> = [].concat(
   ...lsp_features.map(feature => feature.commands)
@@ -42,8 +44,8 @@ const lsp_commands: Array<IFeatureCommand> = [].concat(
 /**
  * The plugin registration information.
  */
-const plugin: JupyterFrontEndPlugin<void> = {
-  id: '@krassowski/jupyterlab-lsp:plugin',
+const plugin: JupyterFrontEndPlugin<ILanguageServerManager> = {
+  id: `${NS}:plugin`,
   requires: [
     IEditorTracker,
     INotebookTracker,
@@ -56,6 +58,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     ILabShell,
     IStatusBar
   ],
+  provides: ILanguageServerManager,
   activate: (
     app: JupyterFrontEnd,
     fileEditorTracker: IEditorTracker,
@@ -68,7 +71,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
     paths: IPaths,
     labShell: ILabShell,
     status_bar: IStatusBar
-  ) => {
+  ): ILanguageServerManager => {
+    const manager = new LanguageServerManger();
     // temporary workaround for getting the absolute path
     let server_root = paths.directories.serverRoot;
     if (server_root.startsWith('~')) {
@@ -212,6 +216,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       .catch((reason: Error) => {
         console.error(reason.message);
       });
+
+    return manager;
   },
   autoStart: true
 };

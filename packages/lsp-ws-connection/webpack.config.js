@@ -1,4 +1,4 @@
-import { resolve } from 'path';
+const path = require('path');
 
 module.exports = {
   mode: 'production',
@@ -11,6 +11,7 @@ module.exports = {
         test: /\.js$/,
         use: ['source-map-loader'],
         enforce: 'pre',
+        // eslint-disable-next-line no-undef
         exclude: /node_modules/
       },
       { test: /\.js.map$/, use: 'file-loader' }
@@ -25,7 +26,7 @@ module.exports = {
   },
   output: {
     filename: '[name].js',
-    path: resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'dist'),
     library: 'lsp-ws-connection',
     libraryTarget: 'umd'
   }

@@ -12,7 +12,7 @@ import {
 import { CompletionTriggerKind } from './lsp';
 import { until_ready } from './utils';
 
-export interface IInitializationUpdater {
+export interface IInitParamsUpdater {
   (init_params: lsProtocol.InitializeParams): lsProtocol.InitializeParams;
 }
 
@@ -20,11 +20,11 @@ interface ILSPOptions extends ILspOptions {
   /**
    * A callback which may return a transformed InitializeParams
    */
-  updateInitParams?: IInitializationUpdater;
+  updateInitParams?: IInitParamsUpdater;
 }
 
 export class LSPConnection extends LspWsConnection {
-  protected update_init_params: IInitializationUpdater;
+  protected update_init_params: IInitParamsUpdater;
   constructor(options: ILSPOptions) {
     super(options);
     this.update_init_params = options.updateInitParams;

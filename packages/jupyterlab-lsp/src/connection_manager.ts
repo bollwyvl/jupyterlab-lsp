@@ -2,6 +2,7 @@ import { Signal } from '@phosphor/signaling';
 
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
+import { IDocumentConnectionManager, ILanguageServerManager } from './tokens';
 import { VirtualDocument } from './virtual/document';
 import { LSPConnection } from './connection';
 import { sleep, until_ready } from './utils';
@@ -35,7 +36,7 @@ export interface ISocketConnectionOptions {
  * Each Widget with a document (whether file or a notebook) has its own DocumentConnectionManager
  * (see JupyterLabWidgetAdapter), keeping the virtual document spaces separate if a file is opened twice.
  */
-export class DocumentConnectionManager {
+export class DocumentConnectionManager implements IDocumentConnectionManager {
   connections: Map<VirtualDocument.id_path, LSPConnection>;
   documents: Map<VirtualDocument.id_path, VirtualDocument>;
   initialized: Signal<DocumentConnectionManager, IDocumentConnectionData>;
@@ -56,8 +57,10 @@ export class DocumentConnectionManager {
     Map<VirtualDocument.id_path, VirtualDocument>
   >;
   private ignored_languages: Set<string>;
+  private _lsp_manager: ILanguageServerManager;
 
-  constructor() {
+  constructor(options: IDocumentConnectionManager.IOptions) {
+    this._lsp_manager = options.lsp_manager;
     this.connections = new Map();
     this.documents = new Map();
     this.ignored_languages = new Set();
@@ -102,10 +105,7 @@ export class DocumentConnectionManager {
       serverUri,
       rootUri,
       documentUri,
-      updateInitParams: init_params => {
-        console.log('could have updated', init_params);
-        return init_params;
-      },
+      updateInitParams: params => this._lsp_manager.updateInitParams(params),
       documentText: () => {
         // NOTE: Update is async now and this is not really used, as an alternative method
         // which is compatible with async is used.

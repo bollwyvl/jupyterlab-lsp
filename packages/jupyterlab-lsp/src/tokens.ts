@@ -4,12 +4,13 @@
 import { Token } from '@phosphor/coreutils';
 import { Signal } from '@phosphor/signaling';
 import { VirtualDocument } from './virtual/document';
+import * as lsProtocol from 'vscode-languageserver-protocol';
 
 import {
   IDocumentConnectionData,
   ISocketConnectionOptions
 } from './connection_manager';
-import { LSPConnection } from './connection';
+import { LSPConnection, IInitParamsUpdater } from './connection';
 
 export const NS = '@krassowski/jupyterlab-lsp';
 
@@ -18,6 +19,11 @@ export const NS = '@krassowski/jupyterlab-lsp';
  */
 export interface ILanguageServerManager {
   makeConnectionManager(): IDocumentConnectionManager;
+  registerInitParamsUpdater(updater: IInitParamsUpdater): void;
+  unregisterInitParamsUpdater(updater: IInitParamsUpdater): void;
+  updateInitParams(
+    params: lsProtocol.InitializeParams
+  ): lsProtocol.InitializeParams;
 }
 
 export interface IDocumentConnectionManager {
@@ -39,6 +45,12 @@ export interface IDocumentConnectionManager {
   ): Promise<void>;
   close_all(): void;
   connect(options: ISocketConnectionOptions): Promise<LSPConnection>;
+}
+
+export namespace IDocumentConnectionManager {
+  export interface IOptions {
+    lsp_manager: ILanguageServerManager;
+  }
 }
 
 /* tslint:disable */

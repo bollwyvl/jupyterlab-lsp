@@ -38,7 +38,16 @@ function activate(
   const tracker = new WidgetTracker<MainAreaWidget<ISymbolTree.ISymbolTree>>({
     namespace
   });
-  console.log(lab, settings, commands, restorer, manager);
+  console.log(lab, settings, commands, restorer);
+  manager.registerInitParamsUpdater(params => {
+    const { capabilities } = params;
+    const { textDocument } = capabilities;
+    textDocument.documentSymbol = {
+      ...(textDocument.documentSymbol || {}),
+      hierarchicalDocumentSymbolSupport: true
+    };
+    return params;
+  });
   return tracker;
 }
 

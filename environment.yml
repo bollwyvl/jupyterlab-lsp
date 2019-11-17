@@ -9,7 +9,7 @@ dependencies:
   - jupyterlab >=1.2,<1.3.0a0
   - notebook >=4.3.1
   # build dependencies
-  - nodejs
+  - nodejs >=12,<13
   # for python language server (and development)
   - black
   - flake8 >=3.5

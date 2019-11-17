@@ -13,6 +13,8 @@ import { ILspConnection, ILspOptions, IPosition, ITokenInfo } from './types';
  *  - markdown is preferred over plaintext
  *  - informative members are public and others are protected, not private
  *  - onServerInitialized() was extracted; it also emits a message once connected
+ *  - initializeParams() was extracted, and can be modified by subclasses
+ *  - typescript 3.7 was adopted to clean up deep references
  */
 export class LspWsConnection extends events.EventEmitter
   implements ILspConnection {
@@ -122,7 +124,7 @@ export class LspWsConnection extends events.EventEmitter
     return this.documentInfo.documentUri;
   }
 
-  public getInitializationParams(): protocol.InitializeParams {
+  public initializeParams(): protocol.InitializeParams {
     return {
       capabilities: {
         textDocument: {
@@ -188,11 +190,10 @@ export class LspWsConnection extends events.EventEmitter
       return;
     }
 
+    const message: protocol.InitializeParams = this.initializeParams();
+
     this.connection
-      .sendRequest<protocol.InitializeResult>(
-        'initialize',
-        this.getInitializationParams()
-      )
+      .sendRequest<protocol.InitializeResult>('initialize', message)
       .then(this.onServerInitialized.bind(this), e => {
         console.warn(e);
       });
@@ -245,12 +246,7 @@ export class LspWsConnection extends events.EventEmitter
     triggerCharacter?: string,
     triggerKind?: protocol.CompletionTriggerKind
   ) {
-    if (!this.isConnected) {
-      return;
-    }
-    if (
-      !(this.serverCapabilities && this.serverCapabilities.completionProvider)
-    ) {
+    if (!this.isConnected || !this.serverCapabilities?.completionProvider) {
       return;
     }
 
@@ -295,14 +291,7 @@ export class LspWsConnection extends events.EventEmitter
   }
 
   public getSignatureHelp(location: IPosition) {
-    if (!this.isConnected) {
-      return;
-    }
-    if (
-      !(
-        this.serverCapabilities && this.serverCapabilities.signatureHelpProvider
-      )
-    ) {
+    if (!this.isConnected || !this.serverCapabilities?.signatureHelpProvider) {
       return;
     }
 
@@ -310,12 +299,9 @@ export class LspWsConnection extends events.EventEmitter
     const lines = code.split('\n');
     const typedCharacter = lines[location.line][location.ch];
 
-    if (
-      this.serverCapabilities.signatureHelpProvider &&
-      !this.serverCapabilities.signatureHelpProvider.triggerCharacters.indexOf(
-        typedCharacter
-      )
-    ) {
+    const triggers =
+      this.serverCapabilities?.signatureHelpProvider?.triggerCharacters || [];
+    if (triggers.indexOf(typedCharacter) === -1) {
       // Not a signature character
       return;
     }
@@ -339,14 +325,9 @@ export class LspWsConnection extends events.EventEmitter
    * Request the locations of all matching document symbols
    */
   public getDocumentHighlights(location: IPosition) {
-    if (!this.isConnected) {
-      return;
-    }
     if (
-      !(
-        this.serverCapabilities &&
-        this.serverCapabilities.documentHighlightProvider
-      )
+      !this.isConnected ||
+      !this.serverCapabilities?.documentHighlightProvider
     ) {
       return;
     }
@@ -478,74 +459,44 @@ export class LspWsConnection extends events.EventEmitter
    * The characters that trigger completion automatically.
    */
   public getLanguageCompletionCharacters(): string[] {
-    if (!this.isConnected) {
-      return;
-    }
-    if (
-      !(
-        this.serverCapabilities &&
-        this.serverCapabilities.completionProvider &&
-        this.serverCapabilities.completionProvider.triggerCharacters
-      )
-    ) {
-      return [];
-    }
-    return this.serverCapabilities.completionProvider.triggerCharacters;
+    return this.serverCapabilities?.completionProvider?.triggerCharacters || [];
   }
 
   /**
    * The characters that trigger signature help automatically.
    */
   public getLanguageSignatureCharacters(): string[] {
-    if (!this.isConnected) {
-      return;
-    }
-    if (
-      !(
-        this.serverCapabilities &&
-        this.serverCapabilities.signatureHelpProvider &&
-        this.serverCapabilities.signatureHelpProvider.triggerCharacters
-      )
-    ) {
-      return [];
-    }
-    return this.serverCapabilities.signatureHelpProvider.triggerCharacters;
+    return (
+      this.serverCapabilities?.signatureHelpProvider?.triggerCharacters || []
+    );
   }
 
   /**
    * Does the server support go to definition?
    */
   public isDefinitionSupported() {
-    return !!(
-      this.serverCapabilities && this.serverCapabilities.definitionProvider
-    );
+    return !!this.serverCapabilities?.definitionProvider;
   }
 
   /**
    * Does the server support go to type definition?
    */
   public isTypeDefinitionSupported() {
-    return !!(
-      this.serverCapabilities && this.serverCapabilities.typeDefinitionProvider
-    );
+    return !!this.serverCapabilities?.typeDefinitionProvider;
   }
 
   /**
    * Does the server support go to implementation?
    */
   public isImplementationSupported() {
-    return !!(
-      this.serverCapabilities && this.serverCapabilities.implementationProvider
-    );
+    return !!this.serverCapabilities?.implementationProvider;
   }
 
   /**
    * Does the server support find all references?
    */
   public isReferencesSupported() {
-    return !!(
-      this.serverCapabilities && this.serverCapabilities.referencesProvider
-    );
+    return !!this.serverCapabilities?.referencesProvider;
   }
 
   protected onServerInitialized(params: protocol.InitializeResult) {

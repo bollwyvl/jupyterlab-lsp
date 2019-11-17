@@ -30,8 +30,8 @@ export class LSPConnection extends LspWsConnection {
     this.update_init_params = options.updateInitParams;
   }
 
-  public getInitializationParams(): lsProtocol.InitializeParams {
-    const init_params = super.getInitializationParams();
+  public initializeParams(): lsProtocol.InitializeParams {
+    const init_params = super.initializeParams();
     return this.update_init_params
       ? this.update_init_params(init_params)
       : init_params;

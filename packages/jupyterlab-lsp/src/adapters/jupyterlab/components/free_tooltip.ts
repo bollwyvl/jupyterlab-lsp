@@ -31,10 +31,11 @@ export class FreeTooltip extends Tooltip {
     super(options);
     this.position = options.position;
     this.movetoLineEnd = options.moveToLineEnd;
+    (this as any)._setGeometry = this._patchedSetGeometry;
   }
 
   // @ts-ignore
-  private _setGeometry(): void {
+  private _patchedSetGeometry(): void {
     // Find the start of the current token for hover box placement.
     // @ts-ignore
     const editor = this._editor as CodeEditor.IEditor;

@@ -2,14 +2,22 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { Token } from '@phosphor/coreutils';
+import { Widget } from '@phosphor/widgets';
 import { Signal } from '@phosphor/signaling';
 import { VirtualDocument } from './virtual/document';
+import { JupyterFrontEnd } from '@jupyterlab/application';
+import { INotebookTracker } from '@jupyterlab/notebook';
+import { IEditorTracker } from '@jupyterlab/fileeditor';
+
 import * as lsProtocol from 'vscode-languageserver-protocol';
 
 import {
   IDocumentConnectionData,
   ISocketConnectionOptions
 } from './connection_manager';
+
+import { JupyterLabWidgetAdapter } from './adapters/jupyterlab/jl_adapter';
+
 import { LSPConnection, IInitParamsUpdater } from './connection';
 
 export const NS = '@krassowski/jupyterlab-lsp';
@@ -24,7 +32,25 @@ export interface ILanguageServerManager {
   updateInitParams(
     params: lsProtocol.InitializeParams
   ): lsProtocol.InitializeParams;
+  widgetAdapter(widget: Widget): JupyterLabWidgetAdapter;
 }
+
+export namespace ILanguageServerManager {
+  export interface IOptions {
+    app: JupyterFrontEnd;
+    notebooks: INotebookTracker;
+    file_editors: IEditorTracker;
+  }
+}
+
+/* tslint:disable */
+/**
+ * The language server manager token.
+ */
+export const ILanguageServerManager = new Token<ILanguageServerManager>(
+  `${NS}:ILanguageServerManager`
+);
+/* tslint:enable */
 
 export interface IDocumentConnectionManager {
   connections: Map<VirtualDocument.id_path, LSPConnection>;
@@ -52,12 +78,3 @@ export namespace IDocumentConnectionManager {
     lsp_manager: ILanguageServerManager;
   }
 }
-
-/* tslint:disable */
-/**
- * The language server manager token.
- */
-export const ILanguageServerManager = new Token<ILanguageServerManager>(
-  `${NS}:ILanguageServerManager`
-);
-/* tslint:enable */

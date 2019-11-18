@@ -39,6 +39,7 @@
     "@krassowski/jupyterlab_go_to_definition": "^0.7.1"
   },
   "devDependencies": {
+    "@types/codemirror": "^0.0.74",
     "@babel/preset-env": "^7.4.3",
     "@jupyterlab/application": "~1.2.1",
     "@jupyterlab/apputils": "~1.2.1",

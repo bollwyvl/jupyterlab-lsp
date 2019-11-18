@@ -4,15 +4,14 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { ICommandPalette } from '@jupyterlab/apputils';
-import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
+import { INotebookTracker } from '@jupyterlab/notebook';
 import { CodeMirrorEditor } from '@jupyterlab/codemirror';
-import { FileEditor, IEditorTracker } from '@jupyterlab/fileeditor';
+import { IEditorTracker } from '@jupyterlab/fileeditor';
 import { ISettingRegistry } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { ICompletionManager } from '@jupyterlab/completer';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { IStatusBar } from '@jupyterlab/statusbar';
-import { IDocumentWidget } from '@jupyterlab/docregistry/lib/registry';
 
 import { FileEditorJumper } from '@krassowski/jupyterlab_go_to_definition/lib/jumpers/fileeditor';
 import { NotebookJumper } from '@krassowski/jupyterlab_go_to_definition/lib/jumpers/notebook';
@@ -22,7 +21,7 @@ import { NotebookJumper } from '@krassowski/jupyterlab_go_to_definition/lib/jump
 // import 'codemirror/addon/hint/show-hint';
 import '../style/index.css';
 import { NS, ILanguageServerManager } from './tokens';
-import { LanguageServerManger } from './manager';
+import { LanguageServerManager } from './manager';
 
 import { NotebookAdapter } from './adapters/jupyterlab/notebook';
 import { FileEditorAdapter } from './adapters/jupyterlab/file_editor';
@@ -72,7 +71,11 @@ const plugin: JupyterFrontEndPlugin<ILanguageServerManager> = {
     labShell: ILabShell,
     status_bar: IStatusBar
   ): ILanguageServerManager => {
-    const manager = new LanguageServerManger();
+    const manager = new LanguageServerManager({
+      app,
+      notebooks: notebookTracker,
+      file_editors: fileEditorTracker
+    });
     // temporary workaround for getting the absolute path
     let server_root = paths.directories.serverRoot;
     if (server_root.startsWith('~')) {
@@ -97,19 +100,7 @@ const plugin: JupyterFrontEndPlugin<ILanguageServerManager> = {
     const status_bar_item = new LSPStatus();
 
     labShell.currentChanged.connect(() => {
-      const current = labShell.currentWidget;
-      if (!current) {
-        return;
-      }
-      let adapter = null;
-      if (notebookTracker.has(current)) {
-        let id = (current as NotebookPanel).id;
-        console.warn(id);
-        adapter = notebook_adapters.get(id);
-      } else if (fileEditorTracker.has(current)) {
-        let id = (current as IDocumentWidget<FileEditor>).content.id;
-        adapter = file_editor_adapters.get(id);
-      }
+      let adapter = manager.widgetAdapter(labShell.currentWidget);
 
       if (adapter !== null) {
         status_bar_item.model.adapter = adapter;
@@ -122,11 +113,7 @@ const plugin: JupyterFrontEndPlugin<ILanguageServerManager> = {
         item: status_bar_item,
         align: 'left',
         rank: 1,
-        isActive: () =>
-          labShell.currentWidget &&
-          (fileEditorTracker.currentWidget || notebookTracker.currentWidget) &&
-          (labShell.currentWidget === fileEditorTracker.currentWidget ||
-            labShell.currentWidget === notebookTracker.currentWidget)
+        isActive: () => !!manager.widgetAdapter(labShell.currentWidget)
       }
     );
 

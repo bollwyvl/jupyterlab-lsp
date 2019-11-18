@@ -13,6 +13,7 @@ import {
 } from '@jupyterlab/apputils';
 
 import { ILanguageServerManager } from '@krassowski/jupyterlab-lsp/lib/tokens';
+import { JupyterLabWidgetAdapter } from '@krassowski/jupyterlab-lsp/lib/adapters/jupyterlab/jl_adapter';
 
 import { ISymbolTreeTracker, ISymbolTree, NS } from './tokens';
 
@@ -31,14 +32,16 @@ function activate(
   lab: JupyterFrontEnd,
   manager: ILanguageServerManager,
   settings: ISettingRegistry,
-  commands: ICommandPalette,
+  palette: ICommandPalette,
   restorer: ILayoutRestorer
 ): ISymbolTreeTracker {
+  const { commands, shell } = lab;
   const namespace = 'symbol-tree';
   const tracker = new WidgetTracker<MainAreaWidget<ISymbolTree.ISymbolTree>>({
     namespace
   });
-  console.log(lab, settings, commands, restorer);
+  console.log(lab, settings, palette, restorer);
+
   manager.registerInitParamsUpdater(params => {
     const { capabilities } = params;
     const { textDocument } = capabilities;
@@ -48,7 +51,35 @@ function activate(
     };
     return params;
   });
+
+  commands.addCommand(CommandIDs.show, {
+    label: 'Show Symbol Tree',
+    isVisible: () => !!manager.widgetAdapter(shell.currentWidget),
+    execute: async args => {
+      const adapter: JupyterLabWidgetAdapter =
+        (args as any)?.adapter || manager.widgetAdapter(shell.currentWidget);
+      const widgets = await import('./widget');
+      const content = new widgets.SymbolTreeView({ adapter });
+      content.title.label = adapter.document_path.split('/').slice(-1)[0];
+      const widget = new MainAreaWidget({ content });
+      shell.add(widget, 'main');
+    }
+  });
+
+  palette.addItem({
+    category: 'Languge Server',
+    command: CommandIDs.show
+  });
+
   return tracker;
 }
 
 export default plugin;
+
+/**
+ * The command IDs used by the symbol tree plugin.
+ */
+namespace CommandIDs {
+  export const show = 'symbol-tree:show';
+  export const refresh = 'symbol-tree:refresh';
+}

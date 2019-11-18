@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "lib",
     "rootDir": "src",
-    "types": ["jest"],
+    "types": ["jest", "codemirror/codemirror-panel"],
     "tsBuildInfoFile": "lib/.tsbuildinfo"
   },
   "include": ["src/**/*"],

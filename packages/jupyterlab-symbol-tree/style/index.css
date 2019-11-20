@@ -1,0 +1,17 @@
+.jp-LSP-SymbolTree {
+  overflow-y: auto;
+}
+
+.jp-LSP-SymbolTree button {
+  font-weight: 400;
+  transition: all;
+  background: none;
+  border: 0;
+}
+
+.jp-LSP-SymbolTree button:hover,
+.jp-LSP-SymbolTree button:focus,
+.jp-LSP-SymbolTree button:active {
+  font-weight: 700;
+  transition: all;
+}

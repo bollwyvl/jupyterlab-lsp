@@ -1,8 +1,9 @@
-import { JupyterLabWidgetAdapter } from '@krassowski/jupyterlab-lsp/lib/adapters/jupyterlab/jl_adapter';
 import { MessageConnection } from 'vscode-ws-jsonrpc';
 import * as protocol from 'vscode-languageserver-protocol';
 
 import { VDomModel } from '@jupyterlab/apputils';
+
+import { JupyterLabWidgetAdapter } from '@krassowski/jupyterlab-lsp/lib/adapters/jupyterlab/jl_adapter';
 
 export class SymbolTreeModel extends VDomModel {
   private _adapter: JupyterLabWidgetAdapter;
@@ -36,32 +37,36 @@ export class SymbolTreeModel extends VDomModel {
 
   async refresh() {
     const connections = this._adapter.connection_manager.connections;
-    console.log('connections', connections);
     const keys = Array.from(connections.keys());
+    const symbols = (this.symbols = new Map() as SymbolTreeModel.TSymbolMap);
 
-    const symbols = await Promise.all(
+    await Promise.all(
       keys.map(async key => {
         const connection = connections.get(key);
         const raw: MessageConnection = (connection as any).connection;
-        const response = await (raw.sendRequest<protocol.DocumentSymbol>(
-          'textDocument/documentSymbol',
-          {
-            textDocument: { uri: connection.getDocumentUri() }
-          } as protocol.DocumentSymbolParams
-        ) as Promise<protocol.DocumentSymbol>);
+        let response: protocol.DocumentSymbol;
 
-        let langSymbols: protocol.DocumentSymbol[] = Array.isArray(response)
-          ? response
-          : [response];
+        try {
+          response = await (raw.sendRequest<protocol.DocumentSymbol>(
+            'textDocument/documentSymbol',
+            {
+              textDocument: { uri: connection.getDocumentUri() }
+            } as protocol.DocumentSymbolParams
+          ) as Promise<protocol.DocumentSymbol>);
+          console.log(response);
+          let langSymbols: protocol.DocumentSymbol[] = Array.isArray(response)
+            ? response
+            : [response];
 
-        return { key, symbols: langSymbols };
+          symbols.set(key, langSymbols);
+          this.symbols = symbols;
+        } catch (err) {
+          console.warn(err);
+        }
       })
     );
 
-    this.symbols = symbols.reduce((m, v) => {
-      m.set(v.key, v.symbols);
-      return m;
-    }, new Map() as SymbolTreeModel.TSymbolMap);
+    this.symbols = symbols;
   }
 }
 

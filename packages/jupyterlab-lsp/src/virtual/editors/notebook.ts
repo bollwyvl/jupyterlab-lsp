@@ -38,6 +38,25 @@ class DocDispatcher implements CodeMirror.Doc {
       );
   }
 
+  setSelection(
+    from: IRootPosition,
+    to: IRootPosition,
+    options?: { bias?: number; origin?: string; scroll?: boolean }
+  ): void {
+    // TODO: edgecase: from and to in different cells
+    let editor = this.virtual_editor.virtual_document.get_editor_at_source_line(
+      from
+    );
+    let notebook_map = this.virtual_editor;
+    return editor
+      .getDoc()
+      .setSelection(
+        notebook_map.transform_from_root_to_editor(from),
+        notebook_map.transform_from_root_to_editor(to),
+        options
+      );
+  }
+
   getValue(seperator?: string): string {
     return this.virtual_editor.getValue();
   }

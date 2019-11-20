@@ -5,7 +5,7 @@ class RLanguageServer(ShellSpec):
     key = "r-languageserver"
     cmd = "Rscript"
     args = ["--slave", str(HELPERS / "languageserver.R")]
-    languages = ["r"]
+    languages = ["r", "R"]
     spec = dict(
         display_name=key,
         mime_types=["text/x-rsrc"],

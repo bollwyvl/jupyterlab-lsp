@@ -524,8 +524,6 @@ nodejs = "20.*"
 python-build = ">=1.2.2"
 setuptools = ">=75.8.2"
 uv = ">=0.6.8"
-[feature.deps-build.target.win.dependencies]
-m2-coreutils = "*"
 
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
@@ -593,6 +591,7 @@ atest-min = [
   "deps-atest-py",
   "tasks-atest-min",
   # TODO: separate acceptance test env from system-under-test
+  "deps-build",
   "deps-lab",
   "deps-lab-min",
   "deps-ls-bash",
@@ -612,6 +611,7 @@ atest-now = [
   "deps-atest-py",
   "tasks-atest-now",
   # TODO: separate acceptance test env from system-under-test
+  "deps-build",
   "deps-lab",
   "deps-ls-bash",
   "deps-ls-py",
@@ -626,6 +626,7 @@ atest-pre = [
   "deps-atest-py",
   "tasks-atest-pre",
   # TODO: separate acceptance test env from system-under-test
+  "deps-build",
   "deps-lab",
   "deps-lab-pre",
   "deps-ls-bash",
@@ -663,6 +664,7 @@ dev = [
   "tasks-dev",
 ]
 itest-min = [
+  "deps-build",
   "deps-itest",
   "deps-ls-py",
   "deps-node",        # TODO: remove nodejs reliance for minimal test
@@ -674,6 +676,7 @@ itest-min = [
   "tasks-itest-min",
 ]
 itest-now = [
+  "deps-build",
   "deps-itest",
   "deps-ls-bash",
   "deps-ls-py",
@@ -686,6 +689,7 @@ itest-now = [
 ]
 lint = [
   "deps-atest-py",
+  "deps-build",
   "deps-lab",
   "deps-lint",
   "deps-node",     # TODO: reuse build nodejs

@@ -32,7 +32,7 @@ env:
   ATEST_RETRIES: 3
   JLPM_CMD: jlpm install
   # pixi
-  PIXI_RUN: pixi run # -v # uncomment to see inputs/outputs
+  PIXI_RUN: pixi run --no-install --locked # -v # uncomment to see inputs/outputs
   PIXI_VERSION: 0.41.4
   PIXI_COLOR: always
 
@@ -89,24 +89,24 @@ jobs:
       - run: ${{ env.PIXI_RUN }} fix
       - run: ${{ env.PIXI_RUN }} lint
       - if: always()
-        run: pixi run ci-summary-diff >> "${GITHUB_STEP_SUMMARY}"
+        run: ${{ env.PIXI_RUN }} ci-summary-diff >> "${GITHUB_STEP_SUMMARY}"
 
-  atest:
+  test:
     needs: [build]
     runs-on: ${{ matrix.os }}-${{ matrix.vm }}
     strategy:
       fail-fast: false
       matrix:
+        test: [itest, atest]
+        epoch: [min, now]
         os: [macos, ubuntu, windows]
         vm: [latest]
-        epoch: [min, now]
-        test: [itest, atest]
         exclude:
           - { os: macos, epoch: min }
         include:
-          - { os: ubuntu, epoch: pre, test: atest }
-          - { os: macos, epoch: min, test: itest, vm: 13 }
-          - { os: macos, epoch: min, test: atest, vm: 13 }
+          - { test: atest, epoch: pre, os: ubuntu }
+          - { test: itest, epoch: min, os: macos, vm: 13 }
+          - { test: atest, epoch: min, os: macos, vm: 13 }
     steps:
       - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.8.3
@@ -125,7 +125,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: jplsp-${{ github.run_number }}-dist
-      - run: ${{ env.PIXI_RUN }} ${{ matrix.test }}-${{ matrix.epoch }}
+      - run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}-uv
+      - run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
       - name: Publish browser test output
         uses: actions/upload-artifact@v4
         with:

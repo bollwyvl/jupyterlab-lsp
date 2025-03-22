@@ -70,6 +70,15 @@ lint = {description = "✔️  check all source", depends-on = [
   "lint-yml-actionlint",
 ], cmd = "echo '  ✔️  all linted'"}
 
+## ci tasks
+ci-diff = """
+  echo '### Fixable\n'
+  && echo '`pixi run fix && pixi run lint` would change:\n'
+  && echo '```diff'
+  && (git --no-pager diff || true)
+  && echo '```'
+"""
+
 ## fragment tasks ##############################################################
 ### get python exe
 py-exe-- = "python -c 'import sys; print(sys.executable)'"

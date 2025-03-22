@@ -418,7 +418,7 @@ depends-on = ["dist-pypi-srv"]
 inputs = ["dist/pypi/jupyter_lsp-*.whl"]
 outputs = ["build/pip-freeze/itest-now.txt"]
 
-[feature.tasks-itest.tasks.itest-now-pytest]
+[feature.tasks-itest.tasks.itest-now]
 cmd = "python scripts/utest.py"
 depends-on = ["itest-now-uv", "setup-js"]
 inputs = [

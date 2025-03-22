@@ -23,22 +23,19 @@ defaults:
     shell: bash -l {0}
 
 env:
-  JULIA_NUM_THREADS: 2
-  MAMBA_NO_BANNER: 1
-  PIP_DISABLE_PIP_VERSION_CHECK: 1
-  PYTHONUNBUFFERED: 1
-
-  ATEST_PROCESSES: 2
-  ATEST_RETRIES: 3
-  JLPM_CMD: jlpm install
   # pixi
-  PIXI_RUN: pixi run --no-install --locked # -v # uncomment to see inputs/outputs
-  PIXI_VERSION: 0.41.4
   PIXI_COLOR: always
-
-  # Increase this value to reset all caches
-  CACHE_EPOCH: 5
-  JULIA_LANGSERVER: 4.1.0
+  # python
+  PYTHONUNBUFFERED: 1
+  # julia
+  JULIA_NUM_THREADS: 2
+  # this repo
+  PIXI_VERSION: 0.41.4 # keep in sync with `pixi.toml#/$schema`
+  CACHE_EPOCH: 5 # increase this value to reset all caches
+  ATEST_PROCESSES: 2 # run more atests at once
+  ATEST_RETRIES: 3 # retry atest more times
+  PIXI_RUN: | # add `-v` to see more inputs/outputs
+    pixi run --no-install --locked
 
 jobs:
   build:

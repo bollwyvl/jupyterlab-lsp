@@ -107,7 +107,13 @@ uv-pip-pre-- = """
   rm -rf $FREEZE
   && mkdir -p build/pip-freeze"""
 uv-pip-whl-- = """
-  pixi r uv-pip-install-- --link-mode=copy --no-index --find-links=dist/pypi"""
+  mkdir -p $PIXI_PROJECT_ROOT/build
+  && export CONSTRAINTS=$PIXI_PROJECT_ROOT/build/constraints.txt
+  && python scripts/constraints.py $PIXI_PROJECT_ROOT/dist/pypi > $CONSTRAINTS
+  && pixi r uv-pip-install--
+    --link-mode copy
+    --no-index
+    --constraints $CONSTRAINTS"""
 uv-pip-whl-all-- = """
   export FREEZE=build/pip-freeze/$PIXI_ENVIRONMENT_NAME.txt
   && pixi r uv-pip-pre--

@@ -226,6 +226,7 @@ cmd = """
   cd dist
   && sha256sum pypi/* npm/* > SHA256SUMS
   && cat SHA256SUMS"""
+depends-on = ["dist-npm", "dist-pypi-lab", "dist-pypi-srv"]
 inputs = ["dist/npm", "dist/pypi"]
 outputs = ["dist/SHA256SUMS"]
 
@@ -281,9 +282,9 @@ description = "- format all robot code with robotidy"
 inputs = ["atest/**/*.{robot,resource}", "scripts/lint.py"]
 
 [feature.tasks-lint.tasks.lint-yml-actionlint]
-cmd = "actionlint .github/workflows/job.test.pixi.yml"
+cmd = "actionlint .github/workflows/job.test.yml"
 description = "- check GitHub Actions files with actionlint"
-inputs = [".github/workflows/job.test.pixi.yml"]
+inputs = [".github/workflows/job.test.yml"]
 
 ### linting ####################################################################
 [feature.tasks-lint.tasks.lint-js-prettier]

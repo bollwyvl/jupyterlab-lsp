@@ -31,11 +31,11 @@ all = {description = "🌐 run all the tasks", depends-on = [
 ], cmd = "echo '  🌐 all ok'"}
 atest = {description = "🛰️ run all acceptance tests", depends-on = [
   # did we break backwards lab compatibility?
-  "atest-min-robot",
+  "atest-min",
   # will it work for the current lab?
-  "atest-robot",
+  "atest-now",
   # will it work for the next lab?
-  "atest-pre-robot",
+  "atest-pre",
 ], cmd = "echo '  🛰️ acceptance tests ok'"}
 build = {description = "🚧 build all intermediate files", depends-on = [
   "build-js-lab-ext",
@@ -56,8 +56,8 @@ fix = {description = "🧼 clean up all source", depends-on = [
   "fix-toml-taplo",
 ], cmd = "echo '  🧼 fix ok'"}
 itest = {description = "🔬 run all integration tests", depends-on = [
-  "itest-min-srv-pytest",
-  "itest-pytest",
+  "itest-min",
+  "itest-now",
 ], cmd = "echo '🔬 integration test ok'"}
 lint = {description = "✔️  check all source", depends-on = [
   "lint-ipynb-nblint",
@@ -253,7 +253,7 @@ description = "- format all TOML with taplo"
 inputs = ["*.toml"]
 
 [feature.tasks-fix.tasks.fix-js-prettier]
-cmd = """pixi r -e build jlpm prettier"""
+cmd = """jlpm prettier"""
 depends-on = ["setup-js"]
 description = "- format all web-adjacent files with prettier"
 inputs = [
@@ -267,7 +267,7 @@ inputs = [
 ]
 
 [feature.tasks-fix.tasks.fix-js-eslint]
-cmd = """pixi r -e build jlpm eslint"""
+cmd = """jlpm eslint"""
 depends-on = ["fix-js-prettier", "setup-js"]
 description = "- format all JS/TS with eslint"
 inputs = [
@@ -297,7 +297,7 @@ inputs = [".github/workflows/job.test.yml"]
 
 ### linting ####################################################################
 [feature.tasks-lint.tasks.lint-js-prettier]
-cmd = "pixi r -e build jlpm prettier:check"
+cmd = "jlpm prettier:check"
 description = "- check all web-adjacent files with prettier"
 inputs = [
   "!**/node_modules/",
@@ -309,7 +309,7 @@ inputs = [
 ]
 
 [feature.tasks-lint.tasks.lint-js-eslint]
-cmd = "pixi r -e build jlpm eslint:check"
+cmd = "jlpm eslint:check"
 description = "- check all JS/TS with eslint"
 inputs = [
   "!**/node_modules/",
@@ -354,6 +354,17 @@ inputs = [
   "atest/**/*.{robot,resource}",
   "scripts/lint.py",
 ]
+
+[feature.tasks-lint.tasks.lint-rf-dryrun]
+cmd = "python scripts/atest.py --dryrun --console dotted"
+description = "- check robot files with robot --dryrun"
+inputs = [
+  "!**/{node_modules,.ipynb_checkpoints,build,dist,__pycache__}/",
+  "atest/**/*.{robot,resource,py}",
+  "scripts/{atest}.py",
+]
+outputs = ["build/reports/{darwin,linux,windows}_312/atest/dry_run/"]
+
 
 ### dev ########################################################################
 [feature.tasks-dev.tasks.dev-uv]
@@ -401,15 +412,15 @@ cmd = "jupyter lab --no-browser --debug"
 depends-on = ["dev-lab-ext", "dev-srv-ext", "dev-uv"]
 
 ### integration testing ########################################################
-[feature.tasks-itest.tasks.itest-uv]
+[feature.tasks-itest.tasks.itest-now-uv]
 cmd = "pixi r uv-pip-whl-srv--"
 depends-on = ["dist-pypi-srv"]
 inputs = ["dist/pypi/jupyter_lsp-*.whl"]
-outputs = ["build/pip-freeze/test.txt"]
+outputs = ["build/pip-freeze/itest-now.txt"]
 
-[feature.tasks-itest.tasks.itest-pytest]
+[feature.tasks-itest.tasks.itest-now-pytest]
 cmd = "python scripts/utest.py"
-depends-on = ["itest-uv", "setup-js"]
+depends-on = ["itest-now-uv", "setup-js"]
 inputs = [
   "!**/{__pycache__,build/dist}",
   "python_packages/jupyter_lsp/jupyter_lsp",
@@ -418,17 +429,17 @@ inputs = [
 outputs = ["build/reports/{darwin,linux,windows}_312/utest"]
 
 #### integration only with oldest jupyter_server and pylsp #####################
-[feature.tasks-itest-min-srv.tasks.itest-min-srv-uv]
+[feature.tasks-itest-min.tasks.itest-min-uv]
 cmd = "pixi r uv-pip-whl-srv--"
 depends-on = ["dist-pypi-srv"]
 inputs = ["dist/pypi/jupyter_lsp-*.whl"]
-outputs = ["build/pip-freeze/test-min-srv.txt"]
+outputs = ["build/pip-freeze/test-min.txt"]
 
-[feature.tasks-itest-min-srv.tasks.itest-min-srv-pytest]
+[feature.tasks-itest-min.tasks.itest-min]
 cmd = """python scripts/utest.py
   -k 'not (test_r_package_detection or ((test_listeners or test_start_known) and not pylsp))'
 """
-depends-on = ["itest-min-srv-uv"]
+depends-on = ["itest-min-uv"]
 description = "- run the minimum server tests against one real language server"
 inputs = [
   "!**/{__pycache__,build/dist}",
@@ -438,25 +449,15 @@ inputs = [
 outputs = ["build/reports/{darwin,linux,windows}_39/utest"]
 
 ### acceptance testing #########################################################
-[feature.tasks-atest.tasks.atest-uv]
+[feature.tasks-atest-now.tasks.atest-now-uv]
 cmd = "pixi r uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
 inputs = ["dist/pypi"]
-outputs = ["build/pip-freeze/atest.txt"]
+outputs = ["build/pip-freeze/atest-now.txt"]
 
-[feature.tasks-atest.tasks.lint-rf-dryrun]
-cmd = "python scripts/atest.py --dryrun --console dotted"
-description = "- check robot files with robot --dryrun"
-inputs = [
-  "!**/{node_modules,.ipynb_checkpoints,build,dist,__pycache__}/",
-  "atest/**/*.{robot,resource,py}",
-  "scripts/{atest}.py",
-]
-outputs = ["build/reports/{darwin,linux,windows}_312/atest/dry_run/"]
-
-[feature.tasks-atest.tasks.atest-robot]
+[feature.tasks-atest-now.tasks.atest-now]
 cmd = "python scripts/atest.py"
-depends-on = ["atest-uv", "lint-rf-dryrun"]
+depends-on = ["atest-now-uv", "lint-rf-dryrun"]
 inputs = ["!**/{.ipynb_checkpoints,__pycache__}/", "atest/"]
 outputs = ["!**/dry_run/", "build/reports/{darwin,linux,windows}_312/atest/"]
 
@@ -467,7 +468,7 @@ depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
 inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-min.txt"]
 
-[feature.tasks-atest-min.tasks.atest-min-robot]
+[feature.tasks-atest-min.tasks.atest-min]
 cmd = "python scripts/atest.py"
 depends-on = ["atest-min-uv"]
 inputs = [
@@ -483,7 +484,7 @@ depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
 inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-pre.txt"]
 
-[feature.tasks-atest-pre.tasks.atest-pre-robot]
+[feature.tasks-atest-pre.tasks.atest-pre]
 cmd = "python scripts/atest.py"
 depends-on = ["atest-pre-uv"]
 inputs = [
@@ -587,20 +588,6 @@ geckodriver = "*"
 
 # environments #################################################################
 [environments]
-atest = [
-  "deps-atest-ff",
-  "deps-atest-py",
-  "tasks-atest",
-  # TODO: separate acceptance test env from system-under-test
-  "deps-lab",
-  "deps-ls-bash",
-  "deps-ls-py",
-  "deps-ls-r",
-  "deps-ls-tex",
-  "deps-node",
-  "deps-notebook",
-  "deps-run-srv",
-]
 atest-min = [
   "deps-atest-ff",
   "deps-atest-py",
@@ -618,6 +605,20 @@ atest-min = [
   "deps-notebook-min",
   "deps-run-py",
   "deps-run-py-min",
+  "deps-run-srv",
+]
+atest-now = [
+  "deps-atest-ff",
+  "deps-atest-py",
+  "tasks-atest-now",
+  # TODO: separate acceptance test env from system-under-test
+  "deps-lab",
+  "deps-ls-bash",
+  "deps-ls-py",
+  "deps-ls-r",
+  "deps-ls-tex",
+  "deps-node",
+  "deps-notebook",
   "deps-run-srv",
 ]
 atest-pre = [
@@ -661,7 +662,18 @@ dev = [
   "deps-run-srv",
   "tasks-dev",
 ]
-itest = [
+itest-min = [
+  "deps-itest",
+  "deps-ls-py",
+  "deps-node",        # TODO: remove nodejs reliance for minimal test
+  "deps-node-min",
+  "deps-run-py",
+  "deps-run-py-min",
+  "deps-run-srv",
+  "deps-run-srv-min",
+  "tasks-itest-min",
+]
+itest-now = [
   "deps-itest",
   "deps-ls-bash",
   "deps-ls-py",
@@ -672,20 +684,11 @@ itest = [
   "deps-run-srv",
   "tasks-itest",
 ]
-itest-min-srv = [
-  "deps-itest",
-  "deps-ls-py",
-  "deps-node",           # TODO: remove nodejs reliance for minimal test
-  "deps-node-min",
-  "deps-run-py",
-  "deps-run-py-min",
-  "deps-run-srv",
-  "deps-run-srv-min",
-  "tasks-itest-min-srv",
-]
 lint = [
+  "deps-atest-py",
+  "deps-lab",
   "deps-lint",
-  "deps-node",    # TODO: reuse build nodejs
+  "deps-node",     # TODO: reuse build nodejs
   "deps-run-srv",
   "tasks-fix",
   "tasks-lint",

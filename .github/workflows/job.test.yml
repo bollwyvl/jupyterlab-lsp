@@ -86,10 +86,49 @@ jobs:
             node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: jplsp-${{ github.run_number }}-dist
       - run: ${{ env.PIXI_RUN }} fix
       - run: ${{ env.PIXI_RUN }} lint
       - if: always()
         run: pixi run ci-summary-diff >> "${GITHUB_STEP_SUMMARY}"
+
+  atest:
+    needs: [build]
+    runs-on: ${{ matrix.os }}-${{ matrix.vm }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos, ubuntu, windows]
+        vm: [latest]
+        epoch: [min, now]
+        test: [itest, atest]
+        exclude:
+          - { os: macos, epoch: min }
+        include:
+          - { os: ubuntu, epoch: pre, test: atest }
+          - { os: macos, epoch: min, test: itest, vm: 13 }
+          - { os: macos, epoch: min, test: atest, vm: 13 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: ${{ matrix.test }}-${{ matrix.epoch }}
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            !node_modules/.cache/
+            node_modules/
+          key: |
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-dist
+      - run: ${{ env.PIXI_RUN }} ${{ matrix.test }}-${{ matrix.epoch }}
+      - name: Publish browser test output
+        uses: actions/upload-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-${{ matrix.test }}-${{ matrix.epoch }}-${{ matrix.os }}
+          path: ./build/reports
+        if: always()

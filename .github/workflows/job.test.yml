@@ -92,4 +92,4 @@ jobs:
       - run: ${{ env.PIXI_RUN }} fix
       - run: ${{ env.PIXI_RUN }} lint
       - if: always()
-        run: pixi run ci-diff >> "${GITHUB_STEP_SUMMARY}"
+        run: pixi run ci-summary-diff >> "${GITHUB_STEP_SUMMARY}"

@@ -71,13 +71,20 @@ lint = {description = "✔️  check all source", depends-on = [
 ], cmd = "echo '  ✔️  all linted'"}
 
 ## ci tasks
-ci-diff = """
+ci-summary-diff = """
   echo '### Fixable\n'
-  && echo '`pixi run fix && pixi run lint` would change:\n'
+  && echo '> `pixi run fix && pixi run lint` would make the following changes:\n'
+  && echo '```yaml'
+  && (git --no-pager diff --stat || true)
+  && echo '```\n\n'
+  && echo '<details>'
+  && echo '<summary>Show all changes...</summary>\n\n'
   && echo '```diff'
   && (git --no-pager diff || true)
-  && echo '```'
+  && echo '```\n\n'
+  && echo '</details>'
 """
+description = "- emit a markdown "
 
 ## fragment tasks ##############################################################
 ### get python exe
@@ -251,6 +258,7 @@ depends-on = ["setup-js"]
 description = "- format all web-adjacent files with prettier"
 inputs = [
   "!**/node_modules/",
+  "*.{md,json}",
   ".github/**/*.yml",
   "packages/*/*.{json,md}",
   "packages/*/{src,style}/*.{ts,tsx,css}",

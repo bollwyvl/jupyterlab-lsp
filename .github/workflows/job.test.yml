@@ -37,7 +37,7 @@ env:
   PIXI_COLOR: always
 
   # Increase this value to reset all caches
-  CACHE_EPOCH: 4
+  CACHE_EPOCH: 5
   JULIA_LANGSERVER: 4.1.0
 
 jobs:
@@ -51,17 +51,14 @@ jobs:
           cache: true
           environments: build
       - name: Cache node_modules
-        id: cache-node-modules
         uses: actions/cache@v4
         with:
           path: |
             !node_modules/.cache/
-            .pixi/task-cache-v0/
-            .pixi/.skip-yarn
             node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - run: ${{ env.PIXI_RUN }} setup-js && touch .pixi/.skip-yarn
+      - run: ${{ env.PIXI_RUN }} setup-js && touch node_modules/.ci-skip-yarn
       - run: ${{ env.PIXI_RUN }} build
       - run: ${{ env.PIXI_RUN }} dist
       - uses: actions/upload-artifact@v4
@@ -82,12 +79,10 @@ jobs:
           cache: true
           environments: build lint
       - name: Cache node_modules
-        id: cache-node-modules
         uses: actions/cache@v4
         with:
           path: |
             !node_modules/.cache/
-            .pixi/task-cache-v0/
             node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}

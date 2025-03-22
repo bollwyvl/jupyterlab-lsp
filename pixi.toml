@@ -123,7 +123,7 @@ pyproj-build-- = """
 ## feature tasks ###############################################################
 ### build ######################################################################
 [feature.tasks-build.tasks.setup-js]
-cmd = "cat .pixi/.skip-yarn || jlpm"
+cmd = "cat node_modules/.ci-skip-yarn || jlpm"
 description = "- install npm dependencies"
 inputs = [".yarnrc.yml", "package.json", "packages/*/package.json"]
 outputs = ["node_modules/.yarn-state.yml", "yarn.lock"]
@@ -247,6 +247,7 @@ inputs = ["*.toml"]
 
 [feature.tasks-fix.tasks.fix-js-prettier]
 cmd = """pixi r -e build jlpm prettier"""
+depends-on = ["setup-js"]
 description = "- format all web-adjacent files with prettier"
 inputs = [
   "!**/node_modules/",
@@ -259,7 +260,7 @@ inputs = [
 
 [feature.tasks-fix.tasks.fix-js-eslint]
 cmd = """pixi r -e build jlpm eslint"""
-depends-on = ["fix-js-prettier"]
+depends-on = ["fix-js-prettier", "setup-js"]
 description = "- format all JS/TS with eslint"
 inputs = [
   "!**/node_modules/",

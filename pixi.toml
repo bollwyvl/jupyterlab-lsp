@@ -123,7 +123,7 @@ pyproj-build-- = """
 ## feature tasks ###############################################################
 ### build ######################################################################
 [feature.tasks-build.tasks.setup-js]
-cmd = "jlpm"
+cmd = "cat .pixi/.skip-yarn || jlpm"
 description = "- install npm dependencies"
 inputs = [".yarnrc.yml", "package.json", "packages/*/package.json"]
 outputs = ["node_modules/.yarn-state.yml", "yarn.lock"]

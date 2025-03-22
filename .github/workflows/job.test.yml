@@ -34,6 +34,7 @@ env:
   # pixi
   PIXI_RUN: pixi run # -v # uncomment to see inputs/outputs
   PIXI_VERSION: 0.41.4
+  PIXI_COLOR: always
 
   # Increase this value to reset all caches
   CACHE_EPOCH: 4
@@ -56,10 +57,11 @@ jobs:
           path: |
             !node_modules/.cache/
             .pixi/task-cache-v0/
+            .pixi/.skip-yarn
             node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - run: ${{ env.PIXI_RUN }} setup-js
+      - run: ${{ env.PIXI_RUN }} setup-js && touch .pixi/.skip-yarn
       - run: ${{ env.PIXI_RUN }} build
       - run: ${{ env.PIXI_RUN }} dist
       - uses: actions/upload-artifact@v4
@@ -95,4 +97,4 @@ jobs:
       - run: ${{ env.PIXI_RUN }} fix
       - run: ${{ env.PIXI_RUN }} lint
       - if: always()
-        run: pixi ci-diff >> "${GITHUB_STEP_SUMMARY}"
+        run: pixi run ci-diff >> "${GITHUB_STEP_SUMMARY}"

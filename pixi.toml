@@ -1,73 +1,122 @@
 "$schema" = "https://pixi.sh/v0.41.4/schema/manifest/schema.json"
 
-[project]
-channels = [
-  # always conda-forge first
-  "conda-forge",
-  # required for specific features below
-  "conda-forge/label/jupyterlab_beta",
-  "conda-forge/label/notebook_beta",
-]
-name = "jupyterlab-lsp"
-platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+# # project automation for `jupyterlab-lsp`
+#
+# ## Quick Start
+#
+# - start interactive computing
+#
+#      pixi run dev-lab
+#
+#   > inside a Jupyter terminal, use `pixi shell -e default`
+#
+# - see everything you can run:
+#
+#      pixi task list
+#
+# - do due dilligence before committing:
+#
+#      pixi run all
+#
+# - run everything, and test minimum-supported and pre-release upstreams:
+#
+#      pixi r all-epochs
+#
+# ## Working with `pixi.toml`
+#
+# - `taplo` is used to consistently format this file
+#   - all lists and keys are sorted
+#     - use comments to preserve any specific ordering
 
 # tasks ########################################################################
 [tasks]
 ## convenience aliases
-all = {description = "🌐 run all the tasks", depends-on = [
-  # taplo consistently sorts all lists
-  # format first: taplo would re-order this list, hence these comments
+all = {description = "🐙 run sensible task before a PR push", depends-on = [
+  # formatters are cheap
   "fix",
-  # the linters are faster than anything else
+  # ... the linters are faster than most anything else
   "lint",
-  # build intermediates
+  # ... build intermediates
   "build",
-  # build distribution
+  # ... build distribution
   "dist",
-  # run relatively cheap integration tests
+  # ... build docs
+  "docs",
+  # ... run the current latest integration tests
+  "itest-now",
+  # ... run the current latest acceptance tests
+  "atest-now",
+], cmd = "echo '  🐙 pr ok'"}
+all-epochs = {description = "🌐 run all the tasks", depends-on = [
+  # do the base tasks
+  "all",
+  # ... run the rest of relatively cheap integration tests
   "itest",
-  # expensive acceptance tests
+  # ... run the rest of the expensive acceptance tests
   "atest",
 ], cmd = "echo '  🌐 all ok'"}
-atest = {description = "🛰️ run all acceptance tests", depends-on = [
-  # did we break backwards lab compatibility?
+atest = {description = "🛰️  run all acceptance tests", depends-on = [
+  # did we break backwards client compatibility?
   "atest-min",
-  # will it work for the current lab?
+  # ... will it work for the current clients?
   "atest-now",
-  # will it work for the next lab?
+  # ... will it work for pre-release clients?
   "atest-pre",
 ], cmd = "echo '  🛰️ acceptance tests ok'"}
 build = {description = "🚧 build all intermediate files", depends-on = [
-  "build-js-lab-ext",
-  "build-js-lib",
+  # first build the schema
   "build-js-schema",
+  # ... then the JS intermediates
+  "build-js-lib",
+  # ... then production assets
+  "build-js-ext",
 ], cmd = "echo '  🚧 build ok'"}
 dist = {description = "📦 build all distributions", depends-on = [
-  "dist-hash",
+  # build js distributions
   "dist-npm",
+  # ... then python
   "dist-pypi-lab",
   "dist-pypi-srv",
+  # ... and collect everything
+  "dist-hash",
 ], cmd = "echo '  📦 dist ok'"}
+docs = {description = "📚 build all the docs", depends-on = [
+  "docs-sphinx",
+], cmd = "echo '  📚 docs ok'"}
 fix = {description = "🧼 clean up all source", depends-on = [
-  "fix-js-eslint",
-  "fix-js-prettier",
-  "fix-py-black",
-  "fix-rf-robotidy",
+  # toml can impact many other tools, including pixi
   "fix-toml-taplo",
+  # ... many automation scripts are written in python
+  "fix-py-black",
+  # ... this could change js behavior
+  "fix-js-dedupe",
+  # ... yaml and json control many other tools
+  "fix-js-prettier",
+  # ... changes few files
+  "fix-js-eslint",
+  # ... changes even fewer files, not needed until the end of the workflow
+  "fix-rf-robotidy",
 ], cmd = "echo '  🧼 fix ok'"}
 itest = {description = "🔬 run all integration tests", depends-on = [
   "itest-min",
   "itest-now",
 ], cmd = "echo '🔬 integration test ok'"}
 lint = {description = "✔️  check all source", depends-on = [
-  "lint-ipynb-nblint",
-  "lint-js-eslint",
+  # repo integrity is important
+  "lint-integrity",
+  # ... config files should be right
   "lint-js-prettier",
   "lint-py-flake8",
   "lint-py-isort",
+  # ... the JS is pretty complex
+  "lint-js-eslint",
+  # ... acceptance tests are expensive to get wrong
   "lint-rf-dryrun",
   "lint-rf-robocop",
-  "lint-yml-actionlint",
+  # ... ci is important, but seldom changes
+  "lint-actionlint",
+  # ... these are pretty slow
+  "lint-nb-nblint",
 ], cmd = "echo '  ✔️  all linted'"}
 
 ## ci tasks
@@ -84,7 +133,7 @@ ci-summary-diff = """
   && echo '```\n\n'
   && echo '</details>'
 """
-description = "- emit a markdown "
+description = "- emit a markdown summary of changes that would be made by fix/lint"
 
 ## fragment tasks ##############################################################
 ### get python exe
@@ -99,7 +148,12 @@ uv-pip-e-- = """
   && pixi r uv-pip-install-- -e python_packages/jupyter_lsp -e python_packages/jupyterlab_lsp
   && pixi r uv-pip-post--"""
 uv-pip-install-- = """
-  pixi r uv pip install -vv --no-deps --no-build-isolation --offline --reinstall --no-cache-dir"""
+  pixi r uv-pip-- install
+    --no-deps
+    --no-build-isolation
+    --offline
+    --reinstall
+    --no-cache-dir"""
 uv-pip-post-- = """
   pixi r uv-pip-- check
   && pixi r uv-pip-- list --format=freeze > $FREEZE"""
@@ -109,7 +163,8 @@ uv-pip-pre-- = """
 uv-pip-whl-- = """
   mkdir -p $PIXI_PROJECT_ROOT/build
   && export CONSTRAINTS=$PIXI_PROJECT_ROOT/build/constraints.txt
-  && python scripts/constraints.py $PIXI_PROJECT_ROOT/dist/pypi > $CONSTRAINTS
+  && python scripts/constraints.py $PIXI_PROJECT_ROOT/dist/pypi
+    > $CONSTRAINTS
   && pixi r uv-pip-install--
     --link-mode copy
     --no-index
@@ -132,6 +187,15 @@ pyproj-build-- = """
   && pyproject-build --no-isolation .
   && cp dist/* $PIXI_PROJECT_ROOT/dist/pypi
   && rm -rf dist"""
+### lab
+lab-- = """
+  export HOME=$PIXI_PROJECT_ROOT/build/lab/$PIXI_ENVIRONMENT_NAME
+  && mkdir -p $HOME
+  && python --version
+  && jupyter --paths
+  && jupyter labextension list
+  && jupyter server extension list
+  && jupyter lab --no-browser --debug"""
 
 ## feature tasks ###############################################################
 ### build ######################################################################
@@ -174,7 +238,7 @@ outputs = [
   "python_packages/jupyterlab_lsp/jupyterlab_lsp/labextensions/",
 ]
 
-[feature.tasks-build.tasks.build-js-lab-ext]
+[feature.tasks-build.tasks.build-js-ext]
 cmd = "jlpm build:labextension"
 depends-on = ["build-js-lib"]
 description = "- build the labextension"
@@ -199,6 +263,7 @@ cmd = """
   && mkdir -p dist/npm
   && mv packages/*/*.tgz dist/npm"""
 depends-on = ["build-js-lib", "build-js-schema"]
+description = "- build npm distributions"
 inputs = [
   "!**/.ipynb_checkpoints/",
   "packages/*/{lib,style,schema}/",
@@ -214,6 +279,7 @@ outputs = [
 
 [feature.tasks-dist.tasks.dist-pypi-srv]
 cmd = """export PY_PACKAGE=jupyter_lsp && pixi r pyproj-build--"""
+description = "- build PyPI distributions for jupyter-lsp"
 inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",
   "python_packages/jupyter_lsp/jupyter_lsp/**/*.{py,json}",
@@ -224,7 +290,8 @@ outputs = ["dist/pypi/jupyter_lsp-*.{whl,tar.gz}"]
 
 [feature.tasks-dist.tasks.dist-pypi-lab]
 cmd = """export PY_PACKAGE=jupyterlab_lsp && pixi r pyproj-build--"""
-depends-on = ["build-js-lab-ext"]
+depends-on = ["build-js-ext"]
+description = "- build PyPI distributions for jupyterlab-lsp"
 inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",
   "python_packages/jupyterlab_lsp/jupyterlab_lsp/**/*.{py,json}",
@@ -240,8 +307,28 @@ cmd = """
   && sha256sum pypi/* npm/* > SHA256SUMS
   && cat SHA256SUMS"""
 depends-on = ["dist-npm", "dist-pypi-lab", "dist-pypi-srv"]
+description = "- build a hash of the release bundle"
 inputs = ["dist/npm", "dist/pypi"]
 outputs = ["dist/SHA256SUMS"]
+
+### documentation ##############################################################
+[feature.tasks-docs.tasks.docs-uv]
+cmd = "pixi r uv-pip-whl-all--"
+depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
+inputs = ["dist/pypi"]
+outputs = ["build/pip-freeze/docs.txt"]
+
+[feature.tasks-docs.tasks.docs-sphinx]
+cmd = """rm -rf build/docs && python scripts/docs.py"""
+depends-on = ["docs-uv"]
+description = "- build documentation HTML site with sphinx"
+inputs = [
+  "!**/.ipynb_checkpoints",
+  "docs/",
+  "python_packages/*/{jupyter_lsp,jupyterlab_lsp}/*.py",
+  "scripts/docs.py",
+]
+outputs = ["build/docs"]
 
 ### formatting #################################################################
 [feature.tasks-fix.tasks.fix-toml-taplo]
@@ -257,6 +344,12 @@ cmd = """
     *.toml"""
 description = "- format all TOML with taplo"
 inputs = ["*.toml"]
+
+[feature.tasks-fix.tasks.fix-js-dedupe]
+cmd = """(jlpm deduplicate --fail || jlpm) || jlpm deduplicate --fail"""
+depends-on = ["setup-js"]
+description = "- deduplicate npm dependencies"
+inputs = ["yarn.lock"]
 
 [feature.tasks-fix.tasks.fix-js-prettier]
 cmd = """jlpm prettier"""
@@ -296,10 +389,24 @@ cmd = "pixi r python scripts/lint.py robot_tidy"
 description = "- format all robot code with robotidy"
 inputs = ["atest/**/*.{robot,resource}", "scripts/lint.py"]
 
-[feature.tasks-lint.tasks.lint-yml-actionlint]
+[feature.tasks-lint.tasks.lint-actionlint]
 cmd = "actionlint .github/workflows/job.test.yml"
 description = "- check GitHub Actions files with actionlint"
 inputs = [".github/workflows/job.test.yml"]
+
+[feature.tasks-lint.tasks.lint-integrity]
+cmd = "python scripts/integrity.py"
+description = """- check for matching strings, etc. across this repo. TODO: update for pixi"""
+inputs = [
+  ".github/workflows/",
+  "LICENSE",
+  "binder/",
+  "packages/*/package.json",
+  "reqs/",
+  "scripts/integrity.py",
+  "{README,CHANGELOG}.md",
+]
+
 
 ### linting ####################################################################
 [feature.tasks-lint.tasks.lint-js-prettier]
@@ -341,7 +448,7 @@ inputs = [
   "{atest,python_packages,scripts}/**/*.{py,cfg}",
 ]
 
-[feature.tasks-lint.tasks.lint-ipynb-nblint]
+[feature.tasks-lint.tasks.lint-nb-nblint]
 cmd = "python scripts/lint.py nb_lint"
 depends-on = ["setup-js"]
 description = "- check all notebooks"
@@ -375,7 +482,7 @@ outputs = ["build/reports/{darwin,linux,windows}_312/atest/dry_run/"]
 ### dev ########################################################################
 [feature.tasks-dev.tasks.dev-uv]
 cmd = "pixi r uv-pip-e--"
-depends-on = ["build-js-lab-ext"]
+depends-on = ["build-js-ext"]
 inputs = ["python_packages/*/labextensions/", "python_packages/*/setup.{cfg,py}"]
 outputs = ["build/pip-freeze/dev.txt"]
 
@@ -405,7 +512,7 @@ cmd = """
   && jupyter labextension list
   && jupyter labextension list
     > $LABEXT_LIST"""
-depends-on = ["build-js-lab-ext", "dev-uv"]
+depends-on = ["build-js-ext", "dev-uv"]
 description = "- prepare the labextension for interactive development"
 inputs = ["python_packages/*/*/labextensions/"]
 outputs = [
@@ -414,8 +521,16 @@ outputs = [
 ]
 
 [feature.tasks-dev.tasks.dev-lab]
-cmd = "jupyter lab --no-browser --debug"
+cmd = "pixi r lab--"
 depends-on = ["dev-lab-ext", "dev-srv-ext", "dev-uv"]
+description = "- 🔁 run JupyterLab (in the dev environment)"
+
+[feature.tasks-dev.tasks.dev-watch-js]
+cmd = """jlpm lerna run watch
+    --scope '@jupyter-lsp/jupyterlab-{lsp,lsp-metapackage}'
+    --stream"""
+depends-on = ["setup-js"]
+description = "- 🔁 watch and rebuild sources"
 
 ### integration testing ########################################################
 [feature.tasks-itest.tasks.itest-now-uv]
@@ -427,6 +542,7 @@ outputs = ["build/pip-freeze/itest-now.txt"]
 [feature.tasks-itest.tasks.itest-now]
 cmd = "python scripts/utest.py"
 depends-on = ["itest-now-uv", "setup-js"]
+description = "- run integration tests (in the default environment)"
 inputs = [
   "!**/{__pycache__,build/dist}",
   "python_packages/jupyter_lsp/jupyter_lsp",
@@ -439,14 +555,14 @@ outputs = ["build/reports/{darwin,linux,windows}_312/utest"]
 cmd = "pixi r uv-pip-whl-srv--"
 depends-on = ["dist-pypi-srv"]
 inputs = ["dist/pypi/jupyter_lsp-*.whl"]
-outputs = ["build/pip-freeze/test-min.txt"]
+outputs = ["build/pip-freeze/itest-min.txt"]
 
 [feature.tasks-itest-min.tasks.itest-min]
 cmd = """python scripts/utest.py
   -k 'not (test_r_package_detection or ((test_listeners or test_start_known) and not pylsp))'
 """
 depends-on = ["itest-min-uv"]
-description = "- run the minimum server tests against one real language server"
+description = "- run the integration tests (in the oldest supported environment)"
 inputs = [
   "!**/{__pycache__,build/dist}",
   "python_packages/jupyter_lsp/jupyter_lsp",
@@ -458,52 +574,86 @@ outputs = ["build/reports/{darwin,linux,windows}_39/utest"]
 [feature.tasks-atest-now.tasks.atest-now-uv]
 cmd = "pixi r uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
+description = "- prepare for acceptance testing"
 inputs = ["dist/pypi"]
 outputs = ["build/pip-freeze/atest-now.txt"]
 
 [feature.tasks-atest-now.tasks.atest-now]
 cmd = "python scripts/atest.py"
 depends-on = ["atest-now-uv", "lint-rf-dryrun"]
+description = "- run acceptance tests"
 inputs = ["!**/{.ipynb_checkpoints,__pycache__}/", "atest/"]
-outputs = ["!**/dry_run/", "build/reports/{darwin,linux,windows}_312/atest/"]
+outputs = [
+  "!**/dry_run/",
+  "build/reports/{darwin,linux,windows}_312/atest/",
+]
+# TODO: remove
+env = {ATEST_RETRIES = "3"}
 
-### acceptance testing with oldest supported python ############################
+[feature.tasks-atest-now.tasks.atest-now-lab]
+cmd = "pixi r lab--"
+depends-on = ["atest-now-uv"]
+description = "- 🔁 run JupyterLab (in the current acceptance testing environment)"
+
+### acceptance testing with oldest supported python, jupyterlab, etc. ##########
 [feature.tasks-atest-min.tasks.atest-min-uv]
 cmd = "pixi r uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
+description = "- prepare for acceptance testing (in the oldest supported environment)"
 inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-min.txt"]
 
 [feature.tasks-atest-min.tasks.atest-min]
 cmd = "python scripts/atest.py"
 depends-on = ["atest-min-uv"]
+description = "- run acceptance tests (in the oldest supported environment)"
 inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin,linux,windows}_39/atest/"]
+# TODO: remove
+env = {ATEST_RETRIES = "3"}
+
+[feature.tasks-atest-min.tasks.atest-min-lab]
+cmd = "pixi r lab--"
+depends-on = ["atest-min-uv"]
+description = "- 🔁 run JupyterLab (in the oldest-supported testing environment)"
 
 ### acceptance testing with oldest supported python ############################
 [feature.tasks-atest-pre.tasks.atest-pre-uv]
 cmd = "pixi r uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
+description = "- prepare for acceptance testing (in the pre-release environment)"
 inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-pre.txt"]
 
 [feature.tasks-atest-pre.tasks.atest-pre]
 cmd = "python scripts/atest.py"
 depends-on = ["atest-pre-uv"]
+description = "- run acceptance tests (in the pre-release environment)"
 inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin,linux,windows}_313/atest"]
+# TODO: remove
+env = {ATEST_RETRIES = "3"}
+
+[feature.tasks-atest-pre.tasks.atest-pre-lab]
+cmd = "pixi r lab--"
+depends-on = ["atest-pre-uv"]
+description = "- 🔁 run JupyterLab (in the pre-release environment)"
 
 # dependencies #################################################################
-[feature.deps-run-py.dependencies]
+[feature.deps-py.dependencies]
 python = ">=3.9"
-[feature.deps-run-py-min.dependencies]
+[feature.deps-py-min.dependencies]
 python = "3.9.*"
+[feature.deps-py-now.dependencies]
+python = "3.12.*"
+[feature.deps-py-pre.dependencies]
+python = "3.13.*"
 
 [feature.deps-lab.dependencies]
 jupyterlab = ">=4.1,<5.0"
@@ -518,8 +668,9 @@ version = ">=4.4.0b2"
 [feature.deps-run-srv.dependencies]
 jupyter_server = ">=1.1.2"
 [feature.deps-run-srv-min]
+# cannot this test on osx-arm64
 dependencies.jupyter_server = "==1.1.2"
-platforms = ["linux-64", "osx-64", "win-64"] # cannot this test on osx-arm64
+platforms = ["linux-64", "osx-64", "win-64"]
 
 [feature.deps-node.dependencies]
 nodejs = ">=20,!=21.*,!=23.*,!=25.*"
@@ -533,14 +684,17 @@ uv = ">=0.6.8"
 
 [feature.deps-lint.dependencies]
 actionlint-with-all = "*"
-black = "*"
-flake8 = ">=3.5"
-isort = "*"
 mypy = "*"
-pip = "*"
+pytest = "*"
 robotframework-robocop = "*"
 robotframework-tidy = "*"
 taplo = ">=0.9.3"
+# TODO: replace with `ruamel.yaml`
+ruamel_yaml = "*"
+# TODO: replace with ruff
+black = "*"
+flake8 = ">=3.5"
+isort = "*"
 
 [feature.deps-notebook.dependencies]
 notebook = ">=7.1"
@@ -551,8 +705,15 @@ channel = "conda-forge/label/notebook_beta"
 version = ">=7.4.0b2"
 
 [feature.deps-ls-py.dependencies]
+mypy = "*"
 pylsp-mypy = "*"
 python-lsp-server = ">=1.7.4"
+# TODO: replace with ruff
+autopep8 = "*"
+black = "*"
+flake8 = ">=3.5"
+isort = "*"
+pyflakes = "*"
 
 [feature.deps-ls-bash.dependencies]
 shellcheck = "*"
@@ -590,6 +751,22 @@ robotframework-seleniumlibrary = "*"
 firefox = "*"
 geckodriver = "*"
 
+
+[feature.deps-docs.dependencies]
+myst-nb = "*"
+pandas = "*"
+pytest = "*"
+pytest-check-links = "*"
+python-graphviz = "*"
+sphinx = "*"
+sphinx-autobuild = "*"
+sphinx-autodoc-typehints = "*"
+sphinx-book-theme = "*"
+sphinx-copybutton = "*"
+
+[feature.deps-dev.dependencies]
+ipywidgets = "*"
+
 # environments #################################################################
 [environments]
 atest-min = [
@@ -608,8 +785,8 @@ atest-min = [
   "deps-node-min",
   "deps-notebook",
   "deps-notebook-min",
-  "deps-run-py",
-  "deps-run-py-min",
+  "deps-py",
+  "deps-py-min",
   "deps-run-srv",
 ]
 atest-now = [
@@ -625,24 +802,28 @@ atest-now = [
   "deps-ls-tex",
   "deps-node",
   "deps-notebook",
+  "deps-py",
+  "deps-py-now",
   "deps-run-srv",
 ]
 atest-pre = [
   "deps-atest-ff",
   "deps-atest-py",
   "tasks-atest-pre",
+  # won't install next to python 3.13
+  # "deps-ls-r",
   # TODO: separate acceptance test env from system-under-test
   "deps-build",
   "deps-lab",
   "deps-lab-pre",
   "deps-ls-bash",
   "deps-ls-py",
-  "deps-ls-r",
   "deps-ls-tex",
   "deps-node",
   "deps-notebook",
   "deps-notebook-pre",
-  "deps-run-py",
+  "deps-py",
+  "deps-py-pre",
   "deps-run-srv",
 ]
 build = [
@@ -651,12 +832,15 @@ build = [
   "deps-lab-min",
   "deps-node",
   "deps-node-min",
+  "deps-py",
+  "deps-py-now",
   "tasks-build",
   "tasks-dist",
 ]
 dev = [
   "deps-atest-py",
   "deps-build",
+  "deps-dev",
   "deps-lab",
   "deps-lab-now",
   "deps-lint",
@@ -666,20 +850,33 @@ dev = [
   "deps-ls-tex",
   "deps-node",
   "deps-notebook",
+  "deps-py",
+  "deps-py-now",
   "deps-run-srv",
   "tasks-dev",
+]
+docs = [
+  "deps-build",
+  "deps-docs",
+  "deps-lab",
+  "deps-node",
+  "deps-py",
+  "deps-py-now",
+  "deps-run-srv",
+  "tasks-docs",
 ]
 itest-min = [
   "deps-build",
   "deps-itest",
   "deps-ls-py",
-  "deps-node",        # TODO: remove nodejs reliance for minimal test
-  "deps-node-min",
-  "deps-run-py",
-  "deps-run-py-min",
+  "deps-py",
+  "deps-py-min",
   "deps-run-srv",
   "deps-run-srv-min",
   "tasks-itest-min",
+  # TODO: remove nodejs reliance for minimal test
+  "deps-node",
+  "deps-node-min",
 ]
 itest-now = [
   "deps-build",
@@ -689,7 +886,8 @@ itest-now = [
   "deps-ls-r",
   "deps-ls-tex",
   "deps-node",
-  "deps-run-py",
+  "deps-py",
+  "deps-py-now",
   "deps-run-srv",
   "tasks-itest",
 ]
@@ -698,8 +896,20 @@ lint = [
   "deps-build",
   "deps-lab",
   "deps-lint",
-  "deps-node",     # TODO: reuse build nodejs
+  "deps-node",
   "deps-run-srv",
   "tasks-fix",
   "tasks-lint",
 ]
+
+# required conda metadata ######################################################
+[project]
+channels = [
+  # always conda-forge first
+  "conda-forge",
+  # ... required for specific features
+  "conda-forge/label/jupyterlab_beta",
+  "conda-forge/label/notebook_beta",
+]
+name = "jp-lsp"
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]

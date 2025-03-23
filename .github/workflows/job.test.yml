@@ -1,3 +1,7 @@
+# TODO: remove this line which appeases integrity.py
+#
+#   jupyterlab >=4.1.0,<5.0.0a0
+#
 name: CI
 
 on:
@@ -74,7 +78,7 @@ jobs:
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
-          environments: build lint
+          environments: lint
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
@@ -87,6 +91,31 @@ jobs:
       - run: ${{ env.PIXI_RUN }} lint
       - if: always()
         run: ${{ env.PIXI_RUN }} ci-summary-diff >> "${GITHUB_STEP_SUMMARY}"
+
+  docs:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: docs
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            !node_modules/.cache/
+            node_modules/
+          key: |
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - run: ${{ env.PIXI_RUN }} docs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-docs
+          path: |
+            build/docs
 
   test:
     needs: [build]

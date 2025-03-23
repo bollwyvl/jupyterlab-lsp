@@ -38,7 +38,7 @@ env:
   CACHE_EPOCH: 5 # increase this value to reset all caches
   ATEST_PROCESSES: 2 # run more atests at once
   ATEST_RETRIES: 3 # retry atest more times
-  PIXI_RUN: | # add `-v` to see more inputs/outputs
+  PIXI_RUN: |- # add `-v` to see more inputs/outputs
     pixi run --no-install --locked
 
 jobs:

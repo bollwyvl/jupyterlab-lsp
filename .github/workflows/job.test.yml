@@ -34,10 +34,8 @@ env:
   # julia
   JULIA_NUM_THREADS: 2
   # this repo
-  PIXI_VERSION: 0.41.4 # keep in sync with `pixi.toml#/$schema`
   CACHE_EPOCH: 5 # increase this value to reset all caches
-  ATEST_PROCESSES: 2 # run more atests at once
-  ATEST_RETRIES: 3 # retry atest more times
+  PIXI_VERSION: 0.41.4 # keep in sync with `pixi.toml#/$schema`
   PIXI_RUN: |- # add `-v` to see more inputs/outputs
     pixi run --no-install --locked
 
@@ -46,7 +44,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.3
+      - name: |
+          Cache pixi env: build
+        uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
@@ -59,10 +59,14 @@ jobs:
             node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - run: ${{ env.PIXI_RUN }} setup-js && touch node_modules/.ci-skip-yarn
-      - run: ${{ env.PIXI_RUN }} build
-      - run: ${{ env.PIXI_RUN }} dist
-      - uses: actions/upload-artifact@v4
+      - name: Install nodejs dependencies
+        run: ${{ env.PIXI_RUN }} setup-js && touch node_modules/.ci-skip-yarn
+      - name: Build all intermediates
+        run: ${{ env.PIXI_RUN }} build
+      - name: Build all distributions
+        run: ${{ env.PIXI_RUN }} dist
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
         with:
           name: jplsp-${{ github.run_number }}-dist
           path: |
@@ -74,7 +78,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.3
+      - name: |
+          Cache pixi env: lint
+        uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
@@ -87,9 +93,12 @@ jobs:
             node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - run: ${{ env.PIXI_RUN }} fix
-      - run: ${{ env.PIXI_RUN }} lint
-      - if: always()
+      - name: Apply source formatting
+        run: ${{ env.PIXI_RUN }} fix
+      - name: Run source checks
+        run: ${{ env.PIXI_RUN }} lint
+      - name: Report changed files
+        if: always()
         run: ${{ env.PIXI_RUN }} ci-summary-diff >> "${GITHUB_STEP_SUMMARY}"
 
   docs:
@@ -97,7 +106,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.3
+      - name: |
+          Cache pixi env: docs
+        uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
@@ -135,7 +146,9 @@ jobs:
           - { test: atest, epoch: min, os: macos, vm: 13 }
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.3
+      - name: |-
+          Cache pixi env: ${{ matrix.test }}-${{ matrix.epoch }}
+        uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
@@ -148,14 +161,37 @@ jobs:
             node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - uses: actions/download-artifact@v4
+      - name: Download PyPI distributions
+        uses: actions/download-artifact@v4
         with:
           name: jplsp-${{ github.run_number }}-dist
-      - run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}-uv
-      - run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
-      - name: Publish browser test output
+      - name: |-
+          Install PyPI distributions in ${{ matrix.test }} environment (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}-uv
+      - if: matrix.test == 'itest'
+        name: |
+          Run integration tests (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
+      - if: matrix.test == 'atest'
+        name: |-
+          Run ${{ matrix.test }}s (epoch: ${{ matrix.epoch }})
+        env:
+          ROBOT_OPTIONS: -X
+        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
+      - if: matrix.test == 'atest'
+        name: Retry failed acceptance tests
+        timeout-minutes: 30
+        env:
+          ROBOT_OPTIONS: -X
+          ATEST_ATTEMPT: 1
+          ATEST_RETRIES: 4
+        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
+      - if: matrix.test == 'atest' && always()
+        name: Combine acceptance test reports
+        run: ${{ env.PIXI_RUN }} -e ${{ matrix.test }}-${{ matrix.epoch }} python scripts/combine.py
+      - if: always()
+        name: Publish browser test output
         uses: actions/upload-artifact@v4
         with:
           name: jplsp-${{ github.run_number }}-${{ matrix.test }}-${{ matrix.epoch }}-${{ matrix.os }}
           path: ./build/reports
-        if: always()

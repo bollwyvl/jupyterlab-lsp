@@ -137,7 +137,15 @@ ci-summary-diff = """
   && echo '```\n\n'
   && echo '</details>'
 """
-description = "- emit a markdown summary of changes that would be made by fix/lint"
+### atest
+ci-summary-atest = """
+  cd build/reports
+  && rebot
+    --nostatusrc
+    --name jupyterlab-lsp
+    --output output.xml
+    */atest/*/output.xml
+  && ghareports -r output.xml -m $PIXI_ENVIRONMENT_NAME-summary.md"""
 
 ## fragment tasks ##############################################################
 ### get python exe
@@ -191,12 +199,6 @@ pyproj-build-- = """
   && pyproject-build --no-isolation .
   && cp dist/* $PIXI_PROJECT_ROOT/dist/pypi
   && rm -rf dist"""
-### atest
-atest-combine-- = """
-  cd build/reports
-  && rebot
-    --name jupyterlab-lsp
-    */atest/*/output.xml"""
 ### lab
 lab-- = """
   export HOME=$PIXI_PROJECT_ROOT/build/lab/$PIXI_ENVIRONMENT_NAME
@@ -755,10 +757,8 @@ pytoolconfig = "*"
 bs4 = "*"
 coverage = "*"
 robotframework = ">=7"
+robotframework-ghareports = "*"
 robotframework-seleniumlibrary = "*"
-# TODO: add and configure this for better CI reporting
-#  - https://github.com/conda-forge/staged-recipes/pull/29507
-# robotframework-ghareports = "*"
 
 [feature.deps-atest-ff.dependencies]
 firefox = "*"

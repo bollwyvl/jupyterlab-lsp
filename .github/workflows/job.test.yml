@@ -187,8 +187,8 @@ jobs:
           ATEST_RETRIES: 4
         run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
       - if: matrix.test == 'atest' && always()
-        name: Combine acceptance test reports
-        run: ${{ env.PIXI_RUN }} -e ${{ matrix.test }}-${{ matrix.epoch }} atest-combine--
+        name: Summarize acceptance test results
+        run: ${{ env.PIXI_RUN }} -e ${{ matrix.test }}-${{ matrix.epoch }} ci-summary-atest
       - if: always()
         name: Publish browser test output
         uses: actions/upload-artifact@v4

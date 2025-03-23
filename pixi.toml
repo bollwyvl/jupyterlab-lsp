@@ -191,6 +191,12 @@ pyproj-build-- = """
   && pyproject-build --no-isolation .
   && cp dist/* $PIXI_PROJECT_ROOT/dist/pypi
   && rm -rf dist"""
+### atest
+atest-combine-- = """
+  cd build/reports
+  && rebot
+    --name jupyterlab-lsp
+    */atest/*/output.xml"""
 ### lab
 lab-- = """
   export HOME=$PIXI_PROJECT_ROOT/build/lab/$PIXI_ENVIRONMENT_NAME

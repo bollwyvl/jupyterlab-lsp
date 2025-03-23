@@ -34,7 +34,7 @@ env:
   # julia
   JULIA_NUM_THREADS: 2
   # this repo
-  CACHE_EPOCH: 5 # increase this value to reset all caches
+  CACHE_EPOCH: 6 # increase this value to reset all caches
   PIXI_VERSION: 0.41.4 # keep in sync with `pixi.toml#/$schema`
   PIXI_RUN: |- # add `-v` to see more inputs/outputs
     pixi run --no-install --locked
@@ -56,7 +56,7 @@ jobs:
         with:
           path: |
             !node_modules/.cache/
-            node_modules/
+            **/node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - name: Install nodejs dependencies
@@ -90,7 +90,7 @@ jobs:
         with:
           path: |
             !node_modules/.cache/
-            node_modules/
+            **/node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - name: Apply source formatting
@@ -118,7 +118,7 @@ jobs:
         with:
           path: |
             !node_modules/.cache/
-            node_modules/
+            **/node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - run: ${{ env.PIXI_RUN }} docs
@@ -158,7 +158,7 @@ jobs:
         with:
           path: |
             !node_modules/.cache/
-            node_modules/
+            **/node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - name: Download PyPI distributions
@@ -174,12 +174,12 @@ jobs:
         run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
       - if: matrix.test == 'atest'
         name: |-
-          Run ${{ matrix.test }}s (epoch: ${{ matrix.epoch }})
+          Run acceptance tests (epoch: ${{ matrix.epoch }})
         env:
           ROBOT_OPTIONS: -X
         run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
       - if: matrix.test == 'atest'
-        name: Retry failed acceptance tests
+        name: Retry any failed acceptance tests
         timeout-minutes: 30
         env:
           ROBOT_OPTIONS: -X
@@ -188,7 +188,7 @@ jobs:
         run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
       - if: matrix.test == 'atest' && always()
         name: Combine acceptance test reports
-        run: ${{ env.PIXI_RUN }} -e ${{ matrix.test }}-${{ matrix.epoch }} python scripts/combine.py
+        run: ${{ env.PIXI_RUN }} -e ${{ matrix.test }}-${{ matrix.epoch }} atest-combine--
       - if: always()
         name: Publish browser test output
         uses: actions/upload-artifact@v4

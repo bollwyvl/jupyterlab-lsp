@@ -178,7 +178,7 @@ jobs:
         env:
           ROBOT_OPTIONS: -X
         run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
-      - if: matrix.test == 'atest'
+      - if: matrix.test == 'atest' && always()
         name: Retry any failed acceptance tests
         timeout-minutes: 30
         env:

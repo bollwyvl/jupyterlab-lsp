@@ -756,11 +756,13 @@ bs4 = "*"
 coverage = "*"
 robotframework = ">=7"
 robotframework-seleniumlibrary = "*"
+# TODO: add and configure this for better CI reporting
+#  - https://github.com/conda-forge/staged-recipes/pull/29507
+# robotframework-ghareports = "*"
 
 [feature.deps-atest-ff.dependencies]
 firefox = "*"
 geckodriver = "*"
-
 
 [feature.deps-docs.dependencies]
 myst-nb = "*"

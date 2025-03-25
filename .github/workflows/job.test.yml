@@ -44,8 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: |
-          Cache pixi env: build
+      - name: Cache pixi env
         uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
@@ -78,8 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: |
-          Cache pixi env: lint
+      - name: Cache pixi env
         uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
@@ -106,8 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: |
-          Cache pixi env: docs
+      - name: Cache pixi env
         uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
@@ -128,31 +125,28 @@ jobs:
           path: |
             build/docs
 
-  test:
+  itest:
     needs: [build]
     runs-on: ${{ matrix.os }}-${{ matrix.vm }}
     strategy:
       fail-fast: false
       matrix:
-        test: [itest, atest]
         epoch: [min, now]
         os: [macos, ubuntu, windows]
         vm: [latest]
-        exclude:
-          - { os: macos, epoch: min }
         include:
-          - { test: atest, epoch: pre, os: ubuntu, vm: latest }
-          - { test: itest, epoch: min, os: macos, vm: 13 }
-          - { test: atest, epoch: min, os: macos, vm: 13 }
+          - { epoch: min, os: macos, vm: 13 }
+          - { epoch: pre, os: ubuntu, vm: 13 }
+        exclude:
+          - { epoch: min, os: macos, vm: latest }
     steps:
       - uses: actions/checkout@v4
-      - name: |-
-          Cache pixi env: ${{ matrix.test }}-${{ matrix.epoch }}
+      - name: Cache pixi env
         uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
-          environments: ${{ matrix.test }}-${{ matrix.epoch }}
+          environments: itest-${{ matrix.epoch }}
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
@@ -166,32 +160,73 @@ jobs:
         with:
           name: jplsp-${{ github.run_number }}-dist
       - name: |-
-          Install PyPI distributions in ${{ matrix.test }} environment (epoch: ${{ matrix.epoch }})
-        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}-uv
-      - if: matrix.test == 'itest'
-        name: |
+          Install PyPI distributions for integration testing (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}-uv
+      - name: |
           Run integration tests (epoch: ${{ matrix.epoch }})
-        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
-      - if: matrix.test == 'atest'
-        name: |-
-          Run acceptance tests (epoch: ${{ matrix.epoch }})
-        env:
-          ROBOT_OPTIONS: -X
-        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
-      - if: matrix.test == 'atest' && always()
-        name: Retry any failed acceptance tests
-        timeout-minutes: 30
-        env:
-          ROBOT_OPTIONS: -X
-          ATEST_ATTEMPT: 1
-          ATEST_RETRIES: 4
-        run: ${{ env.PIXI_RUN }} --skip-deps ${{ matrix.test }}-${{ matrix.epoch }}
-      - if: matrix.test == 'atest' && always()
-        name: Summarize acceptance test results
-        run: ${{ env.PIXI_RUN }} -e ${{ matrix.test }}-${{ matrix.epoch }} ci-summary-atest
+        run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}
       - if: always()
         name: Publish browser test output
         uses: actions/upload-artifact@v4
         with:
-          name: jplsp-${{ github.run_number }}-${{ matrix.test }}-${{ matrix.epoch }}-${{ matrix.os }}
+          name: |-
+            jplsp-${{ github.run_number }}-itest-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
+          path: ./build/reports
+
+  atest:
+    needs: [build]
+    runs-on: ${{ matrix.os }}-${{ matrix.vm }}
+    strategy:
+      fail-fast: false
+      matrix:
+        epoch: [min, now]
+        os: [macos, ubuntu, windows]
+        vm: [latest]
+        include:
+          - { epoch: min, os: macos, vm: 13 }
+          - { epoch: pre, os: ubuntu, vm: latest }
+        exclude:
+          - { epoch: min, os: macos, vm: latest }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache pixi env
+        uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: atest-${{ matrix.epoch }}
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            !node_modules/.cache/
+            **/node_modules/
+          key: |
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Download PyPI distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-dist
+      - name: |-
+          Install PyPI distributions for acceptance testing (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-uv
+      - name: |-
+          Run all acceptance tests (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
+      - if: always()
+        name: Retry any failed acceptance tests
+        timeout-minutes: 30
+        env:
+          ATEST_ATTEMPT: 1
+          ATEST_RETRIES: 4
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
+      - if: always()
+        name: Summarize acceptance test results
+        run: ${{ env.PIXI_RUN }} -e atest-${{ matrix.epoch }} ci-summary-atest
+      - if: always()
+        name: Publish browser test output
+        uses: actions/upload-artifact@v4
+        with:
+          name: |-
+            jplsp-${{ github.run_number }}-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
           path: ./build/reports

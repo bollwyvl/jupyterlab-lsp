@@ -698,7 +698,7 @@ uv = ">=0.6.8"
 actionlint-with-all = "*"
 mypy = "*"
 pytest = "*"
-robotframework-robocop = "*"
+robotframework-robocop = "5.*"
 robotframework-tidy = "*"
 taplo = ">=0.9.3"
 # TODO: replace with `ruamel.yaml`

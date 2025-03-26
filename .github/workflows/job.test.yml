@@ -34,7 +34,7 @@ env:
   # julia
   JULIA_NUM_THREADS: 2
   # this repo
-  CACHE_EPOCH: 6 # increase this value to reset all caches
+  CACHE_EPOCH: 7 # increase this value to reset all caches
   PIXI_VERSION: 0.41.4 # keep in sync with `pixi.toml#/$schema`
   PIXI_RUN: |- # add `-v` to see more inputs/outputs
     pixi run --no-install --locked
@@ -226,8 +226,8 @@ jobs:
       - name: |-
           Run all acceptance tests (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
-      - if: always()
-        name: Retry any failed acceptance tests
+      - name: Retry any failed acceptance tests
+        if: always()
         timeout-minutes: 30
         env:
           ATEST_ATTEMPT: 1
@@ -236,10 +236,10 @@ jobs:
       - if: always()
         name: Summarize acceptance test results
         run: ${{ env.PIXI_RUN }} -e atest-${{ matrix.epoch }} ci-summary-atest
-      - if: always()
-        name: Publish browser test output
+      - name: Publish test reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: |-
-            jplsp-${{ github.run_number }}-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
+            jplsp-${{ github.run_number }}-report-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
           path: ./build/reports

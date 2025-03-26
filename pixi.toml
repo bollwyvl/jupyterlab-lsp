@@ -576,11 +576,9 @@ outputs = ["build/pip-freeze/itest-min.txt"]
 [feature.tasks-itest-min.tasks.itest-min]
 cmd = """
   python scripts/utest.py
-  -k 'not (
-    test_r_package_detection
-    or julia
-    or ((test_listeners or test_start_known) and not pylsp)
-  )'
+    -k "not test_r_package_detection"
+    -k "not julia"
+    -k "not (test_listeners or test_start_known) and not pylsp)"
 """
 depends-on = ["itest-min-uv"]
 description = "- run the integration tests (in the oldest supported environment)"
@@ -600,7 +598,7 @@ inputs = ["dist/pypi"]
 outputs = ["build/pip-freeze/atest-now.txt"]
 
 [feature.tasks-atest-now.tasks.atest-now]
-cmd = "python scripts/atest.py"
+cmd = "pixi r julia-- && python scripts/atest.py"
 depends-on = ["atest-now-uv", "lint-rf-dryrun"]
 description = "- run acceptance tests"
 inputs = ["!**/{.ipynb_checkpoints,__pycache__}/", "atest/"]
@@ -608,8 +606,6 @@ outputs = [
   "!**/dry_run/",
   "build/reports/{darwin_312,linux_312,windows_312}/atest/",
 ]
-# TODO: remove
-env = {ATEST_RETRIES = "3"}
 
 [feature.tasks-atest-now.tasks.atest-now-lab]
 cmd = "pixi r -q lab--"
@@ -633,8 +629,6 @@ inputs = [
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin_39,linux_39,windows_39}/atest/"]
-# TODO: remove
-env = {ATEST_RETRIES = "3"}
 
 [feature.tasks-atest-min.tasks.atest-min-lab]
 cmd = "pixi r -q lab--"
@@ -650,7 +644,7 @@ inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-pre.txt"]
 
 [feature.tasks-atest-pre.tasks.atest-pre]
-cmd = "python scripts/atest.py"
+cmd = "pixi r julia-- && python scripts/atest.py"
 depends-on = ["atest-pre-uv"]
 description = "- run acceptance tests (in the pre-release environment)"
 inputs = [
@@ -658,8 +652,6 @@ inputs = [
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin_313,linux_313,windows_313}/atest/"]
-# TODO: remove
-env = {ATEST_RETRIES = "3"}
 
 [feature.tasks-atest-pre.tasks.atest-pre-lab]
 cmd = "pixi r -q lab--"
@@ -683,8 +675,8 @@ jupyterlab = "4.1.*"
 [feature.deps-lab-now.dependencies]
 jupyterlab = "4.3.*"
 [feature.deps-lab-pre.dependencies.jupyterlab]
-channel = "conda-forge/label/jupyterlab_beta"
-version = ">=4.4.0b2"
+channel = "conda-forge/label/jupyterlab_rc"
+version = ">=4.4.0rc0"
 
 [feature.deps-run-srv.dependencies]
 jupyter_server = ">=1.1.2"
@@ -723,7 +715,7 @@ notebook = ">=7.1"
 notebook = "7.1.*"
 [feature.deps-notebook-pre.dependencies.notebook]
 channel = "conda-forge/label/notebook_beta"
-version = ">=7.4.0b2"
+version = ">=7.4.0b3"
 
 [feature.deps-ls-py.dependencies]
 mypy = "*"
@@ -739,7 +731,6 @@ pyflakes = "*"
 [feature.deps-ls-bash.dependencies]
 shellcheck = "*"
 
-[feature.deps-ls-julia]
 [feature.deps-ls-julia.target.linux.dependencies]
 julia = "*"
 [feature.deps-ls-julia.target.osx-64.dependencies]
@@ -939,7 +930,7 @@ channels = [
   # always conda-forge first
   "conda-forge",
   # ... required for specific features
-  "conda-forge/label/jupyterlab_beta",
+  "conda-forge/label/jupyterlab_rc",
   "conda-forge/label/notebook_beta",
 ]
 name = "jp-lsp"

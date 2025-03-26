@@ -208,6 +208,11 @@ lab-- = """
   && jupyter labextension list
   && jupyter server extension list
   && jupyter lab --no-browser --debug"""
+### julia
+julia-- = """
+  julia -e 'using Pkg; Pkg.add(Pkg.PackageSpec(;name="LanguageServer", version="4.1.0"))'
+  || exit 0
+"""
 
 ## feature tasks ###############################################################
 ### build ######################################################################
@@ -488,8 +493,7 @@ inputs = [
   "atest/**/*.{robot,resource,py}",
   "scripts/{atest}.py",
 ]
-outputs = ["build/reports/{darwin,linux,windows}_312/atest/dry_run/"]
-
+outputs = ["build/reports/{darwin_312,linux_312,windows_312}/atest/dry_run/"]
 
 ### dev ########################################################################
 [feature.tasks-dev.tasks.dev-uv]
@@ -552,7 +556,7 @@ inputs = ["dist/pypi/jupyter_lsp-*.whl"]
 outputs = ["build/pip-freeze/itest-now.txt"]
 
 [feature.tasks-itest.tasks.itest-now]
-cmd = "python scripts/utest.py"
+cmd = "pixi r julia-- && python scripts/utest.py"
 depends-on = ["itest-now-uv", "setup-js"]
 description = "- run integration tests (in the default environment)"
 inputs = [
@@ -560,7 +564,7 @@ inputs = [
   "python_packages/jupyter_lsp/jupyter_lsp",
   "scripts/utest.py",
 ]
-outputs = ["build/reports/{darwin,linux,windows}_312/utest"]
+outputs = ["build/reports/{darwin_312,linux_312,windows_312}/utest/"]
 
 #### integration only with oldest jupyter_server and pylsp #####################
 [feature.tasks-itest-min.tasks.itest-min-uv]
@@ -570,8 +574,13 @@ inputs = ["dist/pypi/jupyter_lsp-*.whl"]
 outputs = ["build/pip-freeze/itest-min.txt"]
 
 [feature.tasks-itest-min.tasks.itest-min]
-cmd = """python scripts/utest.py
-  -k 'not (test_r_package_detection or ((test_listeners or test_start_known) and not pylsp))'
+cmd = """
+  python scripts/utest.py
+  -k 'not (
+    test_r_package_detection
+    or julia
+    or ((test_listeners or test_start_known) and not pylsp)
+  )'
 """
 depends-on = ["itest-min-uv"]
 description = "- run the integration tests (in the oldest supported environment)"
@@ -580,7 +589,7 @@ inputs = [
   "python_packages/jupyter_lsp/jupyter_lsp",
   "scripts/utest.py",
 ]
-outputs = ["build/reports/{darwin,linux,windows}_39/utest"]
+outputs = ["build/reports/{darwin_39,linux_39,windows_39}/utest/"]
 
 ### acceptance testing #########################################################
 [feature.tasks-atest-now.tasks.atest-now-uv]
@@ -597,7 +606,7 @@ description = "- run acceptance tests"
 inputs = ["!**/{.ipynb_checkpoints,__pycache__}/", "atest/"]
 outputs = [
   "!**/dry_run/",
-  "build/reports/{darwin,linux,windows}_312/atest/",
+  "build/reports/{darwin_312,linux_312,windows_312}/atest/",
 ]
 # TODO: remove
 env = {ATEST_RETRIES = "3"}
@@ -623,7 +632,7 @@ inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",
   "atest/",
 ]
-outputs = ["!**/dry_run/", "build/reports/{darwin,linux,windows}_39/atest/"]
+outputs = ["!**/dry_run/", "build/reports/{darwin_39,linux_39,windows_39}/atest/"]
 # TODO: remove
 env = {ATEST_RETRIES = "3"}
 
@@ -648,7 +657,7 @@ inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",
   "atest/",
 ]
-outputs = ["!**/dry_run/", "build/reports/{darwin,linux,windows}_313/atest"]
+outputs = ["!**/dry_run/", "build/reports/{darwin_313,linux_313,windows_313}/atest/"]
 # TODO: remove
 env = {ATEST_RETRIES = "3"}
 
@@ -730,6 +739,12 @@ pyflakes = "*"
 [feature.deps-ls-bash.dependencies]
 shellcheck = "*"
 
+[feature.deps-ls-julia]
+[feature.deps-ls-julia.target.linux.dependencies]
+julia = "*"
+[feature.deps-ls-julia.target.osx-64.dependencies]
+julia = "*"
+
 [feature.deps-ls-r.dependencies]
 r = "*"
 r-base = "*"
@@ -790,6 +805,7 @@ atest-min = [
   "deps-lab",
   "deps-lab-min",
   "deps-ls-bash",
+  "deps-ls-julia",
   "deps-ls-py",
   "deps-ls-r",
   "deps-ls-tex",
@@ -809,6 +825,7 @@ atest-now = [
   "deps-build",
   "deps-lab",
   "deps-ls-bash",
+  "deps-ls-julia",
   "deps-ls-py",
   "deps-ls-r",
   "deps-ls-tex",
@@ -829,6 +846,7 @@ atest-pre = [
   "deps-lab",
   "deps-lab-pre",
   "deps-ls-bash",
+  "deps-ls-julia",
   "deps-ls-py",
   "deps-ls-tex",
   "deps-node",
@@ -894,6 +912,7 @@ itest-now = [
   "deps-build",
   "deps-itest",
   "deps-ls-bash",
+  "deps-ls-julia",
   "deps-ls-py",
   "deps-ls-r",
   "deps-ls-tex",

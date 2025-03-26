@@ -136,7 +136,6 @@ jobs:
         vm: [latest]
         include:
           - { epoch: min, os: macos, vm: 13 }
-          - { epoch: pre, os: ubuntu, vm: 13 }
         exclude:
           - { epoch: min, os: macos, vm: latest }
     steps:
@@ -155,6 +154,13 @@ jobs:
             **/node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Cache julia
+        uses: actions/cache@v4
+        with:
+          path: |
+            .pixi/envs/itest-${{ matrix.epoch }}/share/julia
+          key: |
+            ${{ env.CACHE_EPOCH }}-julia-itest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
       - name: Download PyPI distributions
         uses: actions/download-artifact@v4
         with:
@@ -203,6 +209,13 @@ jobs:
             **/node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Cache julia
+        uses: actions/cache@v4
+        with:
+          path: |
+            .pixi/envs/atest-${{ matrix.epoch }}/share/julia
+          key: |
+            ${{ env.CACHE_EPOCH }}-julia-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
       - name: Download PyPI distributions
         uses: actions/download-artifact@v4
         with:

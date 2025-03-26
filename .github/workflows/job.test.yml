@@ -1,3 +1,7 @@
+# TODO: remove this line which appeases integrity.py
+#
+#   jupyterlab >=4.1.0,<5.0.0a0
+#
 name: CI
 
 on:
@@ -23,408 +27,219 @@ defaults:
     shell: bash -l {0}
 
 env:
-  JULIA_NUM_THREADS: 2
-  MAMBA_NO_BANNER: 1
-  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  # pixi
+  PIXI_COLOR: always
+  # python
   PYTHONUNBUFFERED: 1
-
-  ATEST_PROCESSES: 2
-  ATEST_RETRIES: 3
-  JLPM_CMD: jlpm install
-
-  # Increase this value to reset all caches
-  CACHE_EPOCH: 4
-  JULIA_LANGSERVER: 4.1.0
+  # julia
+  JULIA_NUM_THREADS: 2
+  # this repo
+  CACHE_EPOCH: 7 # increase this value to reset all caches
+  PIXI_VERSION: 0.41.4 # keep in sync with `pixi.toml#/$schema`
+  PIXI_RUN: |- # add `-v` to see more inputs/outputs
+    pixi run --no-install --locked
 
 jobs:
-  lint:
-    name: jstest/lint
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        os: [ubuntu]
-        nodejs: ['>=20,<21']
-        lab: ['>=4.1.0,<5.0.0a0']
-        r: ['>=4']
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: cschleiden/replace-tokens@v1
-        with:
-          tokenPrefix: '{'
-          tokenSuffix: '}'
-          files: '["requirements/github-actions.yml"]'
-        env:
-          lab: '${{ matrix.lab }}'
-          nodejs: '${{ matrix.nodejs }}'
-
-      - name: Set up Python and mamba
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          environment-file: requirements/github-actions.yml
-          mamba-version: '*'
-          channels: conda-forge,nodefaults
-          channel-priority: true
-
-      - name: Install linting dependencies
-        run: mamba env update -n test --file requirements/lint.yml
-
-      - name: Check integrity of package versions
-        run: python scripts/integrity.py
-
-      - name: Cache node_modules
-        id: cache-node-modules
-        uses: actions/cache@v4
-        with:
-          path: '**/node_modules'
-          key: |
-            ${{ env.CACHE_EPOCH }}-${{ runner.os }}-node-build-${{ hashFiles('yarn.lock', 'requirements/github-actions.yml') }}
-
-      - name: Cache yarn packages
-        id: cache-yarn-packages
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: '.yarn/cache'
-          key: |
-            ${{ env.CACHE_EPOCH }}-yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_EPOCH }}-yarn-${{ runner.os }}-
-            ${{ env.CACHE_EPOCH }}-yarn-
-
-      - name: Install npm dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: ${{ env.JLPM_CMD }}
-
-      - name: Build frontend
-        run: jlpm build
-
-      - name: Run frontend unit tests
-        run: jlpm test --no-bail
-
-      - name: Lint backend
-        run: python scripts/lint.py
-
-      - name: 'Revert templated file (TODO: remove)'
-        run: git checkout requirements/github-actions.yml
-
-      - name: Lint frontend
-        run: jlpm lint:check
-
-      - name: Check distributions
-        run: python scripts/distcheck.py
-
   build:
-    name: build
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        os: [ubuntu]
-        nodejs: ['>=20,<21']
-        lab: ['>=4.1.0,<5.0.0a0']
-        r: ['>=4']
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: cschleiden/replace-tokens@v1
+      - name: Cache pixi env
+        uses: prefix-dev/setup-pixi@v0.8.3
         with:
-          tokenPrefix: '{'
-          tokenSuffix: '}'
-          files: '["requirements/github-actions.yml"]'
-        env:
-          lab: '${{ matrix.lab }}'
-          nodejs: '${{ matrix.nodejs }}'
-
-      - name: Set up Python and mamba
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          mamba-version: '*'
-          channels: conda-forge,nodefaults
-          channel-priority: true
-
-      - name: Install minimal build deps
-        run: mamba install -n test -c conda-forge setuptools wheel 'jupyterlab${{ matrix.lab }}' 'nodejs${{ matrix.nodejs }}'
-
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: build
       - name: Cache node_modules
-        id: cache-node-modules
         uses: actions/cache@v4
         with:
-          path: '**/node_modules'
+          path: |
+            !node_modules/.cache/
+            **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-${{ runner.os }}-node-build-${{ hashFiles('yarn.lock', 'requirements/github-actions.yml') }}
-
-      - name: Cache yarn packages
-        id: cache-yarn-packages
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: '.yarn/cache'
-          key: |
-            ${{ env.CACHE_EPOCH }}-yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_EPOCH }}-yarn-${{ runner.os }}-
-            ${{ env.CACHE_EPOCH }}-yarn-
-
-      - name: install npm dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: ${{ env.JLPM_CMD }}
-
-      - name: Build frontend
-        run: |
-          jlpm build
-          jlpm bundle
-
-      - name: Build python distributions
-        run: |
-          set -eux
-          cp README.md python_packages/jupyterlab_lsp
-          cd python_packages/jupyter_lsp
-          python setup.py sdist bdist_wheel
-          cd ../jupyterlab_lsp
-          python setup.py sdist bdist_wheel
-          cd ../klingon_ls_specification
-          python setup.py sdist bdist_wheel
-
-      - name: Collect distributions
-        run: |
-          set -eux
-          mkdir dist
-          cp python_packages/*/dist/* packages/*/*.tgz dist/
-          cd dist
-          sha256sum * | tee SHA256SUMS
-
-      - name: Publish builds
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Install nodejs dependencies
+        run: ${{ env.PIXI_RUN }} setup-js && touch node_modules/.ci-skip-yarn
+      - name: Build all intermediates
+        run: ${{ env.PIXI_RUN }} build
+      - name: Build all distributions
+        run: ${{ env.PIXI_RUN }} dist
+      - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
-          name: jupyterlab-lsp dist ${{ github.run_number }}
-          path: ./dist
+          name: jplsp-${{ github.run_number }}-dist
+          path: |
+            .pixi/task-cache-v0/
+            dist/
 
-  acceptance:
-    runs-on: ${{ matrix.os }}-latest
-    name: atest ${{ matrix.os }} py${{ matrix.python }} r${{ matrix.r }}
+  lint:
     needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache pixi env
+        uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: lint
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            !node_modules/.cache/
+            **/node_modules/
+          key: |
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Apply source formatting
+        run: ${{ env.PIXI_RUN }} fix
+      - name: Run source checks
+        run: ${{ env.PIXI_RUN }} lint
+      - name: Report changed files
+        if: always()
+        run: ${{ env.PIXI_RUN }} ci-summary-diff >> "${GITHUB_STEP_SUMMARY}"
+
+  docs:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache pixi env
+        uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: docs
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            !node_modules/.cache/
+            **/node_modules/
+          key: |
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - run: ${{ env.PIXI_RUN }} docs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-docs
+          path: |
+            build/docs
+
+  itest:
+    needs: [build]
+    runs-on: ${{ matrix.os }}-${{ matrix.vm }}
     strategy:
-      # TODO: maybe turn back on
       fail-fast: false
       matrix:
-        os: ['ubuntu', 'macos', 'windows']
-        python: ['3.9', '3.12']
+        epoch: [min, now]
+        os: [macos, ubuntu, windows]
+        vm: [latest]
         include:
-          - python: '3.9'
-            # Node 18 end-of-life: 2025-04-30
-            nodejs: '>=18,<19.0.0.a0'
-            r: '>=4'
-            lab: '>=4.1.0,<5'
-          - python: '3.11'
-            # Node 20 end-of-life: 2026-04-30
-            nodejs: '>=20,<21.0.0.a0'
-            r: '>=4'
-            lab: '>=4.1.0,<5'
-
+          - { epoch: min, os: macos, vm: 13 }
+        exclude:
+          - { epoch: min, os: macos, vm: latest }
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set JupyterLab and Node versions
-        uses: cschleiden/replace-tokens@v1
+      - name: Cache pixi env
+        uses: prefix-dev/setup-pixi@v0.8.3
         with:
-          tokenPrefix: '{'
-          tokenSuffix: '}'
-          files: '["requirements/github-actions.yml"]'
-        env:
-          lab: '${{ matrix.lab }}'
-          nodejs: '${{ matrix.nodejs }}'
-
-      - name: Set up Python and mamba
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: ${{ matrix.python }}
-          environment-file: requirements/github-actions.yml
-          channels: conda-forge,nodefaults
-          channel-priority: true
-          miniforge-version: latest
-
-      - name: List all packages
-        run: conda list
-
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: itest-${{ matrix.epoch }}
       - name: Cache node_modules
-        id: cache-node-modules
         uses: actions/cache@v4
         with:
-          path: '**/node_modules'
+          path: |
+            !node_modules/.cache/
+            **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-${{ runner.os }}-node-atest-${{ hashFiles('yarn.lock') }}
-
-      - name: Cache yarn packages
-        id: cache-yarn-packages
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Cache julia
         uses: actions/cache@v4
         with:
-          path: '.yarn/cache'
+          path: |
+            .pixi/envs/itest-${{ matrix.epoch }}/share/julia
           key: |
-            ${{ env.CACHE_EPOCH }}-yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_EPOCH }}-yarn-${{ runner.os }}-
-            ${{ env.CACHE_EPOCH }}-yarn-
-
-      - uses: actions/cache@v4
+            ${{ env.CACHE_EPOCH }}-julia-itest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
+      - name: Download PyPI distributions
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.julia/artifacts
-          key: |
-            ${{ env.CACHE_EPOCH }}-julia-test-${{ runner.os }}-${{ env.JULIA_LANGSERVER }}
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: jupyterlab-lsp dist ${{ github.run_number }}
-          path: ./dist
-
-      - name: Install python packages
-        run: python -m pip install --find-links=dist --no-index --ignore-installed --no-deps jupyter_lsp jupyterlab_lsp
-
-      - name: Install Klingon file type extension and server specification (for testing languages without language servers)
-        run: python -m pip install --find-links=dist --no-index --ignore-installed --no-deps klingon_ls_specification
-
-      - name: Pip check
-        run: |
-          python -m pip check
-          python -m pip list | grep -ie klingon-ls-specification
-
-      - name: List server extensions
-        run: |
-          jupyter server extension list
-          jupyter server extension list 2>&1 | grep -ie "jupyter_lsp.*enabled" -
-
-      - name: List frontend extensions
-        run: |
-          jupyter labextension list
-          jupyter labextension list 2>&1 | grep -ie "jupyterlab-lsp.*enabled" -
-          jupyter labextension list 2>&1 | grep -ie "jupyterlab-lsp-klingon-integration.*enabled" -
-
-      - name: install node-based language servers
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: ${{ env.JLPM_CMD }}
-
-      - name: Install Julia
-        uses: julia-actions/setup-julia@v1
-
-      - name: Install Julia language server
-        run: julia -e 'using Pkg; Pkg.add(Pkg.PackageSpec(;name="LanguageServer", version="${{ env.JULIA_LANGSERVER }}"))'
-
-      - name: Run python tests
-        run: python scripts/utest.py
-
-      - name: Run browser tests
-        run: python scripts/atest.py --exclude expect:fail
-
-      - name: Find and remove empty files
-        # https://github.com/actions/upload-artifact/issues/150
-        run: find ./build/reports -empty -delete
-        if: always()
-        shell: bash
-
-      - name: Publish browser test output
+          name: jplsp-${{ github.run_number }}-dist
+      - name: |-
+          Install PyPI distributions for integration testing (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}-uv
+      - name: |
+          Run integration tests (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}
+      - if: always()
+        name: Publish browser test output
         uses: actions/upload-artifact@v4
         with:
-          name: Robot ${{ matrix.os }} Python ${{ matrix.python }} ${{ github.run_number }}
+          name: |-
+            jplsp-${{ github.run_number }}-itest-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
           path: ./build/reports
-        if: always()
 
-  smoke:
-    name: smoke ${{ matrix.os }} py${{ matrix.python }}
-    runs-on: ${{ matrix.os }}-latest
-    needs: [build, lint]
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        os: ['ubuntu', 'macos', 'windows']
-        python: ['3.9', '3.12', 'pypy-3.9']
-        include:
-          - python: '3.9'
-            dist: 'jupyter*lsp*.whl'
-            lab: '>=4.1.0,<5'
-          - python: '3.9'
-            dist: 'jupyter*lsp*.tar.gz'
-            lab: '>=4.1.0,<5'
-          - python: '3.11'
-            dist: 'jupyter*lsp*.whl'
-            lab: '>=4.1.0,<5'
-          - python: 'pypy-3.9'
-            dist: 'jupyter*lsp*.tar.gz'
-            lab: '>=4.1.0,<5'
-          - os: 'windows'
-            py_cmd: python
-          - os: 'macos'
-            py_cmd: python3
-          - os: 'ubuntu'
-            py_cmd: python
-    steps:
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-          architecture: 'x64'
-      - uses: actions/download-artifact@v4
-        with:
-          name: jupyterlab-lsp dist ${{ github.run_number }}
-          path: ./dist
-      - name: Install the prerequisites
-        run: ${{ matrix.py_cmd }} -m pip install pip wheel
-      - name: Install the package
-        run: cd dist && ${{ matrix.py_cmd }} -m pip install -vv ${{ matrix.dist }} 'jupyterlab${{ matrix.lab }}'
-      - name: Validate environment
-        run: |
-          set -eux
-          ${{ matrix.py_cmd }} -m pip freeze
-          ${{ matrix.py_cmd }} -m pip check
-      - name: Validate the install
-        run: |
-          set -eux
-          ${{ matrix.py_cmd }} -m jupyter labextension list
-          ${{ matrix.py_cmd }} -m jupyter server extension list
-          ${{ matrix.py_cmd }} -m jupyter labextension list 2>&1 | grep -ie "jupyterlab-lsp.*enabled.*ok" -
-          ${{ matrix.py_cmd }} -m jupyter server extension list 2>&1 | grep -ie "jupyter_lsp.*enabled" -
-
-  source:
-    name: smoke source install ${{ matrix.os }} py${{ matrix.python }} lab${{ matrix.lab }}
-    runs-on: ${{ matrix.os }}-latest
+  atest:
     needs: [build]
+    runs-on: ${{ matrix.os }}-${{ matrix.vm }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
-        python: ['3.9', '3.12']
-        nodejs: ['20.x']
+        epoch: [min, now]
+        os: [macos, ubuntu, windows]
+        vm: [latest]
         include:
-          - python: '3.9'
-            lab: '>=4.1.0,<5'
-          - python: '3.12'
-            lab: '>=4.1.0,<5'
+          - { epoch: min, os: macos, vm: 13 }
+          - { epoch: pre, os: ubuntu, vm: latest }
+        exclude:
+          - { epoch: min, os: macos, vm: latest }
     steps:
-      - name: Install Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - name: Cache pixi env
+        uses: prefix-dev/setup-pixi@v0.8.3
         with:
-          python-version: ${{ matrix.python }}
-          architecture: 'x64'
-      - name: Setup Node
-        uses: actions/setup-node@v4
+          pixi-version: v${{ env.PIXI_VERSION }}
+          cache: true
+          environments: atest-${{ matrix.epoch }}
+      - name: Cache node_modules
+        uses: actions/cache@v4
         with:
-          node-version: ${{ matrix.nodejs }}
-      - uses: actions/download-artifact@v4
+          path: |
+            !node_modules/.cache/
+            **/node_modules/
+          key: |
+            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Cache julia
+        uses: actions/cache@v4
         with:
-          name: jupyterlab-lsp dist ${{ github.run_number }}
-          path: ./dist
-      - name: Install the prerequisites
-        run: python -m pip install --upgrade pip wheel setuptools
-      - name: Install JupyterLab
-        run: python -m pip install 'jupyterlab${{ matrix.lab }}'
-      - name: Install the server package
-        run: cd dist && python -m pip install -vv jupyter_lsp*.whl
-      - name: install the source extension
-        run: cd dist && jupyter labextension install jupyter-lsp-jupyterlab-lsp-*.tgz --log-level DEBUG
-      - name: Validate the install
-        run: |
-          set -eux
-          jupyter labextension list
-          jupyter server extension list
-          jupyter labextension list 2>&1 | grep -ie "jupyterlab-lsp.*enabled.*ok" -
-          jupyter server extension list 2>&1 | grep -ie "jupyter_lsp.*enabled" -
+          path: |
+            .pixi/envs/atest-${{ matrix.epoch }}/share/julia
+          key: |
+            ${{ env.CACHE_EPOCH }}-julia-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
+      - name: Download PyPI distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-dist
+      - name: |-
+          Install PyPI distributions for acceptance testing (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-uv
+      - name: |-
+          Run all acceptance tests (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
+      - name: Retry any failed acceptance tests
+        if: always()
+        timeout-minutes: 30
+        env:
+          ATEST_ATTEMPT: 1
+          ATEST_RETRIES: 4
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
+      - if: always()
+        name: Summarize acceptance test results
+        run: ${{ env.PIXI_RUN }} -e atest-${{ matrix.epoch }} ci-summary-atest
+      - name: Publish test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: |-
+            jplsp-${{ github.run_number }}-report-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
+          path: ./build/reports

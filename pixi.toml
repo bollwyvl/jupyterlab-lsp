@@ -652,7 +652,7 @@ inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-pre.txt"]
 
 [feature.tasks-atest-pre.tasks.atest-pre]
-cmd = "pixi run julia-- && python pixi run --quiet atest-gh-1111--"
+cmd = "pixi run julia-- && pixi run --quiet atest-gh-1111--"
 depends-on = ["atest-pre-uv"]
 description = "- run acceptance tests (in the pre-release environment)"
 inputs = [

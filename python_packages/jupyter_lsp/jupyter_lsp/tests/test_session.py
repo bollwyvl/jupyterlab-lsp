@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pprint import pprint
 
 import pytest
 
@@ -18,7 +19,8 @@ async def assert_status_set(handler, expected_statuses, language_server=None):
         for session_server, session in payload["sessions"].items()
         if language_server is None or language_server == session_server
     }
-    assert statuses == expected_statuses, payload
+    pprint(payload)
+    assert statuses == expected_statuses
 
 
 @pytest.mark.asyncio

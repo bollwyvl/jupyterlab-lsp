@@ -128,9 +128,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        epoch: [min, now]
         os: [macos, ubuntu, windows]
         vm: [latest]
+        epoch: [min, now]
         include:
           - { epoch: min, os: macos, vm: 13 }
         exclude:
@@ -184,9 +184,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        epoch: [min, now]
         os: [macos, ubuntu, windows]
         vm: [latest]
+        epoch: [min, now]
         include:
           - { epoch: min, os: macos, vm: 13 }
           - { epoch: pre, os: ubuntu, vm: latest }

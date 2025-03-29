@@ -8,12 +8,10 @@ on:
   push:
     branches:
       - main
-      - 3.x
       - 4.x
   pull_request:
     branches:
       - main
-      - 3.x
       - 4.x
   workflow_dispatch:
 
@@ -21,10 +19,6 @@ on:
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
-
-defaults:
-  run:
-    shell: bash -l {0}
 
 env:
   # pixi
@@ -34,10 +28,12 @@ env:
   # julia
   JULIA_NUM_THREADS: 2
   # this repo
-  CACHE_EPOCH: 7 # increase this value to reset all caches
-  PIXI_VERSION: 0.43.3 # keep in sync with `pixi.toml#/$schema`
-  PIXI_RUN: |- # add `-v` to see more inputs/outputs
-    pixi run --no-install --locked
+  ## increase this value to reset all caches
+  CACHE_EPOCH: 8
+  ## keep in sync with `pixi.toml#/$schema`
+  PIXI_VERSION: 0.43.3
+  ## add `-v` to see more inputs/outputs
+  PIXI_RUN: pixi run --no-install --locked
 
 jobs:
   build:
@@ -71,6 +67,7 @@ jobs:
           path: |
             .pixi/task-cache-v0/
             dist/
+            yarn.lock
 
   lint:
     needs: [build]

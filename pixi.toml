@@ -92,8 +92,6 @@ fix = {description = "🧼 clean up all source", depends-on = [
   "fix-toml-taplo",
   # ... many automation scripts are written in python
   "fix-py-black",
-  # ... this could change js behavior
-  "fix-js-dedupe",
   # ... yaml and json control many other tools
   "fix-js-prettier",
   # ... changes few files
@@ -227,8 +225,16 @@ atest-gh-1111-- = """
 ## feature tasks ###############################################################
 ### build ######################################################################
 [feature.tasks-build.tasks.setup-js]
-cmd = "cat node_modules/.ci-skip-yarn || jlpm"
-description = "- install npm dependencies"
+cmd = """
+  cat node_modules/.ci-skip-yarn
+  || (
+    jlpm
+    && (
+      (jlpm deduplicate --fail || jlpm)
+      || jlpm deduplicate --fail
+    )
+  )"""
+description = "- install and deduplicate npm dependencies"
 inputs = [".yarnrc.yml", "package.json", "packages/*/package.json"]
 outputs = ["node_modules/.yarn-state.yml", "yarn.lock"]
 
@@ -371,12 +377,6 @@ cmd = """
     *.toml"""
 description = "- format all TOML with taplo"
 inputs = ["*.toml"]
-
-[feature.tasks-fix.tasks.fix-js-dedupe]
-cmd = """(jlpm deduplicate --fail || jlpm) || jlpm deduplicate --fail"""
-depends-on = ["setup-js"]
-description = "- deduplicate yarn dependencies"
-inputs = ["yarn.lock"]
 
 [feature.tasks-fix.tasks.fix-js-prettier]
 cmd = """jlpm prettier"""

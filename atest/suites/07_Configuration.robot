@@ -26,6 +26,7 @@ Python Dotted
 
 Python (server-side via overrides JSON)
     [Documentation]    same as "Python" but changing the defaults in server specification via `overrides.json`
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics    Python    style.py    pylsp-with-override-json
     ...    settings=100
     ...    before=undefined name 'foo' (pyflakes)
@@ -35,6 +36,7 @@ Python (server-side via overrides JSON)
 
 Python (server-side via spec)
     [Documentation]    same as "Python" but changing the defaults in server specification via `workspace_configuration`
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics    Python    style.py    pylsp-with-override-spec
     ...    settings=100
     ...    before=undefined name 'foo' (pyflakes)

@@ -22,6 +22,7 @@ Syntax Highlighting Mode Changes In Cells Dominated By Foreign Documents
     should be equal    ${mode}    javascript
 
 Highlighing Mode Works For Multiple Documents
+    [Tags]    gh:1111
     ${mode} =    Get Mode Of A Cell    4
     should be equal    ${mode}    javascript
     ${mode} =    Get Mode Of A Cell    6

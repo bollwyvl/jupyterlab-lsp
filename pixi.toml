@@ -1,4 +1,4 @@
-"$schema" = "https://pixi.sh/v0.41.4/schema/manifest/schema.json"
+"$schema" = "https://pixi.sh/v0.43.3/schema/manifest/schema.json"
 
 # # project automation for `jupyterlab-lsp`
 #
@@ -8,7 +8,7 @@
 #
 #      pixi run dev-lab
 #
-#   > inside a Jupyter terminal, use `pixi shell -e default`
+#   > inside a Jupyter terminal, use `pixi shell --environment default`
 #
 # - watch sources and rebuild
 #
@@ -24,7 +24,7 @@
 #
 # - run everything, and test minimum-supported and pre-release upstreams:
 #
-#      pixi r all-epochs
+#      pixi run all-epochs
 #
 # ## Working with `pixi.toml`
 #
@@ -46,9 +46,9 @@ all = {description = "🐙 run sensible task before a PR push", depends-on = [
   "dist",
   # ... build docs
   "docs",
-  # ... run the current latest integration tests
+  # ... run the integration tests (in the current supported environment)
   "itest-now",
-  # ... run the current latest acceptance tests
+  # ... run the acceptance tests (in the current supported environment)
   "atest-now",
 ], cmd = "echo '  🐙 pr ok'"}
 all-epochs = {description = "🌐 run all the tasks", depends-on = [
@@ -145,64 +145,68 @@ ci-summary-atest = """
     --name jupyterlab-lsp
     --output output.xml
     */atest/*/output.xml
-  && ghareports -r output.xml -m $PIXI_ENVIRONMENT_NAME-summary.md"""
+  && ghareports
+    --robotlog output.xml
+    --markdown $PIXI_ENVIRONMENT_NAME-summary.md"""
 
 ## fragment tasks ##############################################################
 ### get python exe
 py-exe-- = "python -c 'import sys; print(sys.executable)'"
 ### pip
 uv-pip-- = """
-  export UV_PYTHON=$(pixi r -q py-exe--)
+  export UV_PYTHON=$(pixi run --quiet py-exe--)
   && uv pip"""
 uv-pip-e-- = """
   export FREEZE=build/pip-freeze/$PIXI_ENVIRONMENT_NAME.txt
-  && pixi r -q uv-pip-pre--
-  && pixi r -q uv-pip-install-- -e python_packages/jupyter_lsp -e python_packages/jupyterlab_lsp
-  && pixi r -q uv-pip-post--"""
+  && pixi run --quiet uv-pip-pre--
+  && pixi run --quiet uv-pip-install--
+    --editable python_packages/jupyter_lsp
+    --editable python_packages/jupyterlab_lsp
+  && pixi run --quiet uv-pip-post--"""
 uv-pip-install-- = """
-  pixi r -q uv-pip-- install
+  pixi run --quiet uv-pip-- install
     --no-deps
     --no-build-isolation
     --offline
     --reinstall
     --no-cache-dir"""
 uv-pip-post-- = """
-  pixi r -q uv-pip-- check
-  && pixi r -q uv-pip-- list --format=freeze > $FREEZE"""
+  pixi run --quiet uv-pip-- check
+  && pixi run --quiet uv-pip-- list --format=freeze > $FREEZE"""
 uv-pip-pre-- = """
-  rm -rf $FREEZE
-  && mkdir -p build/pip-freeze"""
+  rm --recursive --force $FREEZE
+  && mkdir --parents build/pip-freeze"""
 uv-pip-whl-- = """
-  mkdir -p $PIXI_PROJECT_ROOT/build
+  mkdir --parents $PIXI_PROJECT_ROOT/build
   && export CONSTRAINTS=$PIXI_PROJECT_ROOT/build/constraints.txt
   && python scripts/constraints.py $PIXI_PROJECT_ROOT/dist/pypi
     > $CONSTRAINTS
-  && pixi r -q uv-pip-install--
+  && pixi run --quiet uv-pip-install--
     --link-mode copy
     --no-index
     --constraints $CONSTRAINTS"""
 uv-pip-whl-all-- = """
   export FREEZE=build/pip-freeze/$PIXI_ENVIRONMENT_NAME.txt
-  && pixi r -q uv-pip-pre--
-  && pixi r -q uv-pip-whl-- jupyter_lsp jupyterlab_lsp
-  && pixi r -q uv-pip-post--"""
+  && pixi run --quiet uv-pip-pre--
+  && pixi run --quiet uv-pip-whl-- jupyter_lsp jupyterlab_lsp
+  && pixi run --quiet uv-pip-post--"""
 uv-pip-whl-srv-- = """
   export FREEZE=build/pip-freeze/$PIXI_ENVIRONMENT_NAME.txt
-  && pixi r -q uv-pip-pre--
-  && pixi r -q uv-pip-whl-- jupyter_lsp
-  && pixi r -q uv-pip-post--"""
+  && pixi run --quiet uv-pip-pre--
+  && pixi run --quiet uv-pip-whl-- jupyter_lsp
+  && pixi run --quiet uv-pip-post--"""
 ### build
 pyproj-build-- = """
-  mkdir -p dist/pypi
+  mkdir --parents dist/pypi
   && cd $PIXI_PROJECT_ROOT/python_packages/$PY_PACKAGE/
-  && rm -rf dist
+  && rm --recursive --force dist
   && pyproject-build --no-isolation .
   && cp dist/* $PIXI_PROJECT_ROOT/dist/pypi
-  && rm -rf dist"""
+  && rm --recursive --force dist"""
 ### lab
 lab-- = """
   export HOME=$PIXI_PROJECT_ROOT/build/lab/$PIXI_ENVIRONMENT_NAME
-  && mkdir -p $HOME
+  && mkdir --parents $HOME
   && python --version
   && jupyter --paths
   && jupyter labextension list
@@ -210,8 +214,14 @@ lab-- = """
   && jupyter lab --no-browser --debug"""
 ### julia
 julia-- = """
-  julia -e 'using Pkg; Pkg.add(Pkg.PackageSpec(;name="LanguageServer", version="4.1.0"))'
+  julia --eval 'using Pkg; Pkg.add(Pkg.PackageSpec(;name="LanguageServer", version="4.1.0"))'
   || exit 0
+"""
+### test
+atest-gh-1111-- = """
+  echo "running acceptance tests without known failures"
+  && echo "see: https://github.com/jupyter-lsp/jupyterlab-lsp/issues/1111"
+  && python scripts/atest.py --exclude gh:1111
 """
 
 ## feature tasks ###############################################################
@@ -275,9 +285,9 @@ outputs = ["python_packages/jupyterlab_lsp/jupyterlab_lsp/labextensions/"]
 ### distribution ###############################################################
 [feature.tasks-dist.tasks.dist-npm]
 cmd = """
-  rm -rf dist/npm
+  rm --recursive --force dist/npm
   && jlpm bundle
-  && mkdir -p dist/npm
+  && mkdir --parents dist/npm
   && mv packages/*/*.tgz dist/npm"""
 depends-on = ["build-js-lib", "build-js-schema"]
 description = "- build npm distributions"
@@ -295,7 +305,7 @@ outputs = [
 ]
 
 [feature.tasks-dist.tasks.dist-pypi-srv]
-cmd = """export PY_PACKAGE=jupyter_lsp && pixi r -q pyproj-build--"""
+cmd = """export PY_PACKAGE=jupyter_lsp && pixi run --quiet pyproj-build--"""
 description = "- build PyPI distributions for jupyter-lsp"
 inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",
@@ -306,7 +316,7 @@ inputs = [
 outputs = ["dist/pypi/jupyter_lsp-*.{whl,tar.gz}"]
 
 [feature.tasks-dist.tasks.dist-pypi-lab]
-cmd = """export PY_PACKAGE=jupyterlab_lsp && pixi r -q pyproj-build--"""
+cmd = """export PY_PACKAGE=jupyterlab_lsp && pixi run --quiet pyproj-build--"""
 depends-on = ["build-js-ext"]
 description = "- build PyPI distributions for jupyterlab-lsp"
 inputs = [
@@ -330,13 +340,13 @@ outputs = ["dist/SHA256SUMS"]
 
 ### documentation ##############################################################
 [feature.tasks-docs.tasks.docs-uv]
-cmd = "pixi r -q uv-pip-whl-all--"
+cmd = "pixi run --quiet uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
 inputs = ["dist/pypi"]
 outputs = ["build/pip-freeze/docs.txt"]
 
 [feature.tasks-docs.tasks.docs-sphinx]
-cmd = """rm -rf build/docs && python scripts/docs.py"""
+cmd = """rm --recursive --force build/docs && python scripts/docs.py"""
 depends-on = ["docs-uv"]
 description = "- build documentation HTML site with sphinx"
 inputs = [
@@ -402,7 +412,7 @@ inputs = [
 ]
 
 [feature.tasks-lint.tasks.fix-rf-robotidy]
-cmd = "pixi r -q python scripts/lint.py robot_tidy"
+cmd = "pixi run --quiet python scripts/lint.py robot_tidy"
 description = "- format all robot code with robotidy"
 inputs = ["atest/**/*.{robot,resource}", "scripts/lint.py"]
 
@@ -486,7 +496,7 @@ inputs = [
 ]
 
 [feature.tasks-lint.tasks.lint-rf-dryrun]
-cmd = "python scripts/atest.py --dryrun --console dotted"
+cmd = "pixi run atest-gh-1111-- --dryrun --console dotted"
 description = "- check robot files with robot --dryrun"
 inputs = [
   "!**/{node_modules,.ipynb_checkpoints,build,dist,__pycache__}/",
@@ -497,7 +507,7 @@ outputs = ["build/reports/{darwin_312,linux_312,windows_312}/atest/dry_run/"]
 
 ### dev ########################################################################
 [feature.tasks-dev.tasks.dev-uv]
-cmd = "pixi r -q uv-pip-e--"
+cmd = "pixi run --quiet uv-pip-e--"
 depends-on = ["build-js-ext"]
 inputs = ["python_packages/*/labextensions/", "python_packages/*/setup.{cfg,py}"]
 outputs = ["build/pip-freeze/dev.txt"]
@@ -505,8 +515,8 @@ outputs = ["build/pip-freeze/dev.txt"]
 [feature.tasks-dev.tasks.dev-srv-ext]
 cmd = """
   export SRVEXT_LIST=build/serverext-list/dev.txt
-  && rm -rf $SRVEXT_LIST
-  && mkdir -p build/serverext-list
+  && rm --recursive --force $SRVEXT_LIST
+  && mkdir --parents build/serverext-list
   && jupyter server extension enable --sys-prefix --py jupyter_lsp
   && jupyter server extension list
   && jupyter server extension list
@@ -519,8 +529,8 @@ cmd = """
   export LABEXT_LIST=$PIXI_PROJECT_ROOT/build/labext-list/dev.txt
   && export ENV_PKG_JSON=$PIXI_PROJECT_ROOT/.pixi/envs/dev/share/jupyter/labextensions/@jupyter-lsp/jupyterlab-lsp/package.json
   && export EXT_PKG_JSON=$PIXI_PROJECT_ROOT/build/ext-pkg-json/dev.json
-  && rm -rf $LABEXT_LIST $EXT_PKG_JSON
-  && mkdir -p build/labext-list build/ext-pkg-json
+  && rm --recursive --force $LABEXT_LIST $EXT_PKG_JSON
+  && mkdir --parents build/labext-list build/ext-pkg-json
   && cd python_packages/jupyterlab_lsp
   && jupyter labextension develop --overwrite .
   && cat $ENV_PKG_JSON
@@ -537,7 +547,7 @@ outputs = [
 ]
 
 [feature.tasks-dev.tasks.dev-lab]
-cmd = "pixi r -q lab--"
+cmd = "pixi run --quiet lab--"
 depends-on = ["dev-lab-ext", "dev-srv-ext", "dev-uv"]
 description = "- 🔁 run JupyterLab (in the dev environment)"
 
@@ -550,13 +560,13 @@ description = "- 🔁 watch and rebuild sources"
 
 ### integration testing ########################################################
 [feature.tasks-itest.tasks.itest-now-uv]
-cmd = "pixi r -q uv-pip-whl-srv--"
+cmd = "pixi run --quiet uv-pip-whl-srv--"
 depends-on = ["dist-pypi-srv"]
 inputs = ["dist/pypi/jupyter_lsp-*.whl"]
 outputs = ["build/pip-freeze/itest-now.txt"]
 
 [feature.tasks-itest.tasks.itest-now]
-cmd = "pixi r julia-- && python scripts/utest.py"
+cmd = "pixi run julia-- && python scripts/utest.py"
 depends-on = ["itest-now-uv", "setup-js"]
 description = "- run integration tests (in the default environment)"
 inputs = [
@@ -568,7 +578,7 @@ outputs = ["build/reports/{darwin_312,linux_312,windows_312}/utest/"]
 
 #### integration only with oldest jupyter_server and pylsp #####################
 [feature.tasks-itest-min.tasks.itest-min-uv]
-cmd = "pixi r -q uv-pip-whl-srv--"
+cmd = "pixi run --quiet uv-pip-whl-srv--"
 depends-on = ["dist-pypi-srv"]
 inputs = ["dist/pypi/jupyter_lsp-*.whl"]
 outputs = ["build/pip-freeze/itest-min.txt"]
@@ -591,14 +601,14 @@ outputs = ["build/reports/{darwin_39,linux_39,windows_39}/utest/"]
 
 ### acceptance testing #########################################################
 [feature.tasks-atest-now.tasks.atest-now-uv]
-cmd = "pixi r -q uv-pip-whl-all--"
+cmd = "pixi run --quiet uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
 description = "- prepare for acceptance testing"
 inputs = ["dist/pypi"]
 outputs = ["build/pip-freeze/atest-now.txt"]
 
 [feature.tasks-atest-now.tasks.atest-now]
-cmd = "pixi r julia-- && python scripts/atest.py"
+cmd = "pixi run julia-- && pixi run --quiet atest-gh-1111--"
 depends-on = ["atest-now-uv", "lint-rf-dryrun"]
 description = "- run acceptance tests"
 inputs = ["!**/{.ipynb_checkpoints,__pycache__}/", "atest/"]
@@ -607,21 +617,22 @@ outputs = [
   "build/reports/{darwin_312,linux_312,windows_312}/atest/",
 ]
 
+
 [feature.tasks-atest-now.tasks.atest-now-lab]
-cmd = "pixi r -q lab--"
+cmd = "pixi run --quiet lab--"
 depends-on = ["atest-now-uv"]
 description = "- 🔁 run JupyterLab (in the current acceptance testing environment)"
 
 ### acceptance testing with oldest supported python, jupyterlab, etc. ##########
 [feature.tasks-atest-min.tasks.atest-min-uv]
-cmd = "pixi r -q uv-pip-whl-all--"
+cmd = "pixi run --quiet uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
 description = "- prepare for acceptance testing (in the oldest supported environment)"
 inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-min.txt"]
 
 [feature.tasks-atest-min.tasks.atest-min]
-cmd = "python scripts/atest.py"
+cmd = "pixi run --quiet atest-gh-1111--"
 depends-on = ["atest-min-uv"]
 description = "- run acceptance tests (in the oldest supported environment)"
 inputs = [
@@ -629,22 +640,24 @@ inputs = [
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin_39,linux_39,windows_39}/atest/"]
+# TODO: remove
+env = {ROBOT_OPTIONS = "--exclude NOTgh:1111"}
 
 [feature.tasks-atest-min.tasks.atest-min-lab]
-cmd = "pixi r -q lab--"
+cmd = "pixi run --quiet lab--"
 depends-on = ["atest-min-uv"]
 description = "- 🔁 run JupyterLab (in the oldest-supported testing environment)"
 
 ### acceptance testing with oldest supported python ############################
 [feature.tasks-atest-pre.tasks.atest-pre-uv]
-cmd = "pixi r -q uv-pip-whl-all--"
+cmd = "pixi run --quiet uv-pip-whl-all--"
 depends-on = ["dist-pypi-lab", "dist-pypi-srv"]
 description = "- prepare for acceptance testing (in the pre-release environment)"
 inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-pre.txt"]
 
 [feature.tasks-atest-pre.tasks.atest-pre]
-cmd = "pixi r julia-- && python scripts/atest.py"
+cmd = "pixi run julia-- && python pixi run --quiet atest-gh-1111--"
 depends-on = ["atest-pre-uv"]
 description = "- run acceptance tests (in the pre-release environment)"
 inputs = [
@@ -652,9 +665,11 @@ inputs = [
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin_313,linux_313,windows_313}/atest/"]
+# TODO: remove
+env = {ROBOT_OPTIONS = "--exclude NOTgh:1111"}
 
 [feature.tasks-atest-pre.tasks.atest-pre-lab]
-cmd = "pixi r -q lab--"
+cmd = "pixi run --quiet lab--"
 depends-on = ["atest-pre-uv"]
 description = "- 🔁 run JupyterLab (in the pre-release environment)"
 

@@ -586,9 +586,7 @@ outputs = ["build/pip-freeze/itest-min.txt"]
 [feature.tasks-itest-min.tasks.itest-min]
 cmd = """
   python scripts/utest.py
-    -k "not test_r_package_detection"
-    -k "not julia"
-    -k "not (test_listeners or test_start_known) and not pylsp)"
+    -k "not (test_r_package_detection or julia or ((test_listeners or test_start_known) and not pylsp))"
 """
 depends-on = ["itest-min-uv"]
 description = "- run the integration tests (in the oldest supported environment)"
@@ -617,7 +615,6 @@ outputs = [
   "build/reports/{darwin_312,linux_312,windows_312}/atest/",
 ]
 
-
 [feature.tasks-atest-now.tasks.atest-now-lab]
 cmd = "pixi run --quiet lab--"
 depends-on = ["atest-now-uv"]
@@ -640,8 +637,6 @@ inputs = [
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin_39,linux_39,windows_39}/atest/"]
-# TODO: remove
-env = {ROBOT_OPTIONS = "--exclude NOTgh:1111"}
 
 [feature.tasks-atest-min.tasks.atest-min-lab]
 cmd = "pixi run --quiet lab--"
@@ -665,8 +660,6 @@ inputs = [
   "atest/",
 ]
 outputs = ["!**/dry_run/", "build/reports/{darwin_313,linux_313,windows_313}/atest/"]
-# TODO: remove
-env = {ROBOT_OPTIONS = "--exclude NOTgh:1111"}
 
 [feature.tasks-atest-pre.tasks.atest-pre-lab]
 cmd = "pixi run --quiet lab--"
@@ -770,9 +763,10 @@ pytest-asyncio = "*"
 pytest-cov = "*"
 pytest-github-actions-annotate-failures = "*"
 pytest-html = "*"
-pytest-xdist = "*"
 pytoolconfig = "*"
 "ruamel.yaml" = "*"
+# TODO: restore
+# pytest-xdist = "*"
 
 [feature.deps-atest-py.dependencies]
 bs4 = "*"

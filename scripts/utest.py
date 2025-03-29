@@ -1,5 +1,6 @@
-""" run python unit tests with pytest
-"""
+"""run python unit tests with pytest"""
+
+from __future__ import annotations
 
 import json
 import os
@@ -16,11 +17,12 @@ SCRIPTS = Path(__file__).parent
 ROOT = SCRIPTS.parent.resolve()
 SETUP_CFG = ROOT / "setup.cfg"
 BUILD = ROOT / "build"
-REPORTS = BUILD / "reports" / f"{OS}_{PY}".lower()
-CACHE = BUILD / ".cache/.pytest_cache"
+STEM = f"{OS}_{PY}".lower()
+REPORTS = BUILD / f"reports/{STEM}"
+CACHE = BUILD / f".cache/{STEM}/.pytest_cache"
 OUT = REPORTS / "utest"
 
-OS_PY_ARGS = {
+OS_PY_ARGS: dict[tuple[str, str], list[str]] = {
     # notebook and ipykernel releases do not yet support python 3.8 on windows
     # ("Windows", "38"): ["-k", "not serverextension"]
 }
@@ -68,12 +70,14 @@ def run_tests(*extra_args):
         "--tb=long",
         "-o",
         f"cache_dir={CACHE}",
+        # TODO: restore
         # parallel
-        "-n=auto",
+        # "-n=auto",
         # cov
         "--cov=jupyter_lsp",
         "--cov-config",
         str(SETUP_CFG),
+        "--cov-context=test",
         "--cov-report=term-missing:skip-covered",
         "--cov-report=html:htmlcov",
         "--cov-context=test",

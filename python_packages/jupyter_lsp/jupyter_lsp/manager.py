@@ -1,5 +1,4 @@
-""" A configurable frontend for stdio-based Language Servers
-"""
+"""A configurable frontend for stdio-based Language Servers"""
 
 import asyncio
 import os

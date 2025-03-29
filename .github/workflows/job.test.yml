@@ -159,6 +159,8 @@ jobs:
         with:
           path: |
             .pixi/envs/itest-${{ matrix.epoch }}/share/julia
+            .pixi/envs/itest-${{ matrix.epoch }}/Project.toml
+            .pixi/envs/itest-${{ matrix.epoch }}/Manifest.toml
           key: |
             ${{ env.CACHE_EPOCH }}-julia-itest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
       - name: Download PyPI distributions
@@ -214,6 +216,8 @@ jobs:
         with:
           path: |
             .pixi/envs/atest-${{ matrix.epoch }}/share/julia
+            .pixi/envs/atest-${{ matrix.epoch }}/Project.toml
+            .pixi/envs/atest-${{ matrix.epoch }}/Manifest.toml
           key: |
             ${{ env.CACHE_EPOCH }}-julia-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
       - name: Download PyPI distributions

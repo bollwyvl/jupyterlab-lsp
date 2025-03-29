@@ -19,6 +19,7 @@ Python Nested
 
 Python Dotted
     [Documentation]    pyflakes is enabled by default, but flake8 is not
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics    Python    style.py    pylsp
     ...    {"pylsp.plugins.flake8.enabled": true, "pylsp.plugins.pyflakes.enabled": false}
     ...    undefined name 'foo' (pyflakes)

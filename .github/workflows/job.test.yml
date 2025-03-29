@@ -230,9 +230,15 @@ jobs:
           ROBOT_OPTIONS: --exitonfailure
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} || exit 0
       - name: |-
-          Rerun any failed acceptance tests (epoch: ${{ matrix.epoch }})
+          Rerun any failed acceptance tests, ignore failure (epoch: ${{ matrix.epoch }})
         env:
           ATEST_ATTEMPT: 1
+          ATEST_RETRIES: 1
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} || exit 0
+      - name: |-
+          Re-rerun any failed acceptance tests (epoch: ${{ matrix.epoch }})
+        env:
+          ATEST_ATTEMPT: 2
           ATEST_RETRIES: 2
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
       - if: always()

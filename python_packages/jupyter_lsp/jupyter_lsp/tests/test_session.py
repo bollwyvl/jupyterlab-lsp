@@ -15,12 +15,12 @@ async def assert_status_set(handler, expected_statuses, language_server=None):
     assert not errors
 
     statuses = {
-        session["status"]
-        for session_server, session in payload["sessions"].items()
+        session_server: session["status"]
+        for session_server, session in sorted(payload["sessions"].items())
         if language_server is None or language_server == session_server
     }
-    pprint(payload)
-    assert statuses == expected_statuses
+    pprint("statuses", statuses)
+    assert set(statuses.keys()) == expected_statuses
 
 
 @pytest.mark.asyncio

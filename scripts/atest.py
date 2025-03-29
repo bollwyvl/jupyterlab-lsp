@@ -48,7 +48,7 @@ DEFAULT_ARGS = [
     # TODO: restore to ensures there's no inter-test coupling
     # "--randomize=all",
     # use wide, colorful output for more readable console logs
-    "--consolewidth=120",
+    "--consolewidth=100",
     "--consolecolors=on",
     *NON_CRITICAL_ARGS,
 ]

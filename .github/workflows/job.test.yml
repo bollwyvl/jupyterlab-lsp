@@ -228,7 +228,7 @@ jobs:
           Run acceptance tests until first failure, ignore failure (epoch: ${{ matrix.epoch }})
         env:
           ROBOT_OPTIONS: --exitonfailure
-        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} || exit 0
       - name: |-
           Rerun any failed acceptance tests (epoch: ${{ matrix.epoch }})
         env:

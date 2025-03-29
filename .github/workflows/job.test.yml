@@ -225,8 +225,14 @@ jobs:
           Install PyPI distributions for acceptance testing (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-uv
       - name: |-
-          Run all acceptance tests (epoch: ${{ matrix.epoch }})
+          Run acceptance tests until first failure, ignore failure (epoch: ${{ matrix.epoch }})
         env:
+          ROBOT_OPTIONS: --exitonfailure
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
+      - name: |-
+          Rerun any failed acceptance tests (epoch: ${{ matrix.epoch }})
+        env:
+          ATEST_ATTEMPT: 1
           ATEST_RETRIES: 2
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
       - if: always()

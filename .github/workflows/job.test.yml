@@ -232,13 +232,13 @@ jobs:
           Run acceptance tests until first failure, ignore failure (epoch: ${{ matrix.epoch }})
         env:
           ROBOT_OPTIONS: --exitonfailure
-        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} || echo "will retry"
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} --nostatusrc
       - name: |-
           Rerun any failed acceptance tests, ignore failure (epoch: ${{ matrix.epoch }})
         env:
           ATEST_ATTEMPT: 1
           ATEST_RETRIES: 1
-        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} || echo "will retry"
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} --nostatusrc
       - name: |-
           Re-rerun any failed acceptance tests (epoch: ${{ matrix.epoch }})
         env:
@@ -253,5 +253,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: |-
-            jplsp-${{ github.run_number }}-report-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
+            jplsp-${{ github.run_number }}-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ matrix.vm }}
           path: ./build/reports

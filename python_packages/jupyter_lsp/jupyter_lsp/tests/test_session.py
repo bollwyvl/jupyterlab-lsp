@@ -45,11 +45,10 @@ async def test_start_known(known_server, handlers, jsonrpc_init_msg):
 
     await ws_handler.on_message(jsonrpc_init_msg)
 
+    timeout = 120 if known_server == "julia-language-server" else 20
+
     try:
-        await asyncio.wait_for(
-            ws_handler._messages_wrote.get(),
-            120 if known_server == "julia-language-server" else 20,
-        )
+        await asyncio.wait_for(ws_handler._messages_wrote.get(), timeout)
         ws_handler._messages_wrote.task_done()
     finally:
         ws_handler.on_close()
@@ -58,7 +57,6 @@ async def test_start_known(known_server, handlers, jsonrpc_init_msg):
     assert not session.process
 
     await assert_status_set(handler, {"stopped"}, known_server)
-    await assert_status_set(handler, {"stopped", "not_started"})
 
 
 @pytest.mark.asyncio

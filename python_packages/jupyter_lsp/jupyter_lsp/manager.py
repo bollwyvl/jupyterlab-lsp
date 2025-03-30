@@ -1,10 +1,12 @@
 """A configurable frontend for stdio-based Language Servers"""
 
+from __future__ import annotations
+
 import asyncio
 import os
 import sys
 import traceback
-from typing import Dict, Text, Tuple, cast
+from typing import Any, cast
 
 # See compatibility note on `group` keyword in
 # https://docs.python.org/3/library/importlib.metadata.html#entry-points
@@ -65,12 +67,9 @@ class LanguageServerManager(LanguageServerManagerAPI):
         True, help=_("try to find known language servers in sys.prefix (and elsewhere)")
     ).tag(config=True)
 
-    sessions: Dict[Tuple[Text], LanguageServerSession] = (
-        Dict_(  # type:ignore[assignment]
-            value_trait=Instance(LanguageServerSession),
-            default_value={},
-            help="sessions keyed by language server name",
-        )
+    sessions: dict[str, LanguageServerSession] = Dict_(  # type:ignore[assignment]
+        value_trait=Instance(LanguageServerSession),
+        help="sessions keyed by language server name",
     )
 
     virtual_documents_dir = Unicode(
@@ -119,7 +118,7 @@ class LanguageServerManager(LanguageServerManagerAPI):
 
         return language_servers
 
-    def __init__(self, **kwargs: Dict):
+    def __init__(self, **kwargs: Any):
         """Before starting, perform all necessary configuration"""
         self.all_language_servers: KeyedLanguageServerSpecs = {}
         self._language_servers_from_config: KeyedLanguageServerSpecs = {}

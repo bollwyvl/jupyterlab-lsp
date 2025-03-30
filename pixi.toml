@@ -108,8 +108,10 @@ lint = {description = "✔️  check all source", depends-on = [
   "lint-integrity",
   # ... config files should be right
   "lint-js-prettier",
+  # .. python
   "lint-py-flake8",
   "lint-py-isort",
+  "lint-py-mypy",
   # ... the JS is pretty complex
   "lint-js-eslint",
   # ... acceptance tests are expensive to get wrong
@@ -214,7 +216,7 @@ lab-- = """
 ### julia
 julia-- = """
   julia --eval 'using Pkg; Pkg.add(Pkg.PackageSpec(;name="LanguageServer", version="4.1.0"))'
-  || exit 0
+  || echo "julia not installed or failed for some reason"
 """
 ### test
 atest-gh-1111-- = """
@@ -433,6 +435,15 @@ inputs = [
   "reqs/",
   "scripts/integrity.py",
   "{README,CHANGELOG}.md",
+]
+
+[feature.tasks-lint.tasks.lint-py-mypy]
+cmd = "pixi run --quiet python scripts/lint.py py_mypy_jupyter_lsp"
+description = """- check typings with mypy"""
+inputs = [
+  "python_packages/**/*.py",
+  "scripts/lint.py",
+  "setup.cfg",
 ]
 
 
@@ -714,9 +725,8 @@ mypy = "*"
 pytest = "*"
 robotframework-robocop = "5.*"
 robotframework-tidy = "*"
+"ruamel.yaml" = "*"
 taplo = ">=0.9.3"
-# TODO: replace with `ruamel.yaml`
-ruamel_yaml = "*"
 # TODO: replace with ruff
 black = "*"
 flake8 = ">=3.5"
@@ -764,7 +774,7 @@ texlab = "*"
 
 [feature.deps-itest.dependencies]
 pytest = ">=8.3"
-pytest-asyncio = "*"
+pytest-asyncio = ">=0.26,<0.27"
 pytest-cov = "*"
 pytest-github-actions-annotate-failures = "*"
 pytest-html = "*"
@@ -931,6 +941,7 @@ itest-now = [
 lint = [
   "deps-atest-py",
   "deps-build",
+  "deps-itest",
   "deps-lab",
   "deps-lint",
   "deps-node",

@@ -122,6 +122,7 @@ async def test_substitute_env(handlers: tuple[MockHandler, MockWebsocketHandler]
     await assert_status_set(handler, {"not_started"})
 
     await ws_handler.open(a_server)
+    assert ws_handler.language_server, "the handler doesn't have a language server"
     session = manager.sessions[ws_handler.language_server]
     new_env = session.substitute_env({"test-variable": "value"}, os.environ)
 

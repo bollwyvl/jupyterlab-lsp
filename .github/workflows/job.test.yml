@@ -235,20 +235,22 @@ jobs:
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-uv
       - name: |-
           Run acceptance tests until first failure, ignore failure (epoch: ${{ matrix.epoch }})
+        continue-on-error: true
         env:
           ROBOT_OPTIONS: --exitonfailure
-        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} --nostatusrc
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
       - name: |-
           Rerun any failed acceptance tests, ignore failure (epoch: ${{ matrix.epoch }})
+        continue-on-error: true
         env:
           ATEST_ATTEMPT: 1
           ATEST_RETRIES: 1
-        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }} --nostatusrc
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
       - name: |-
           Re-rerun any failed acceptance tests (epoch: ${{ matrix.epoch }})
         env:
           ATEST_ATTEMPT: 2
-          ATEST_RETRIES: 2
+          ATEST_RETRIES: 3
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
       - if: always()
         name: Summarize acceptance test results

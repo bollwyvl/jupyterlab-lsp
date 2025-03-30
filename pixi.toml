@@ -214,7 +214,7 @@ lab-- = """
   && jupyter server extension list
   && jupyter lab --no-browser --debug"""
 ### julia
-julia-- = """
+setup-julia-- = """
   julia --eval 'using Pkg; Pkg.add(Pkg.PackageSpec(;name="LanguageServer", version="4.1.0"))'
   || echo "julia not installed or failed for some reason"
 """
@@ -446,7 +446,6 @@ inputs = [
   "setup.cfg",
 ]
 
-
 ### linting ####################################################################
 [feature.tasks-lint.tasks.lint-js-prettier]
 cmd = "jlpm prettier:check"
@@ -578,7 +577,7 @@ inputs = ["dist/pypi/jupyter_lsp-*.whl"]
 outputs = ["build/pip-freeze/itest-now.txt"]
 
 [feature.tasks-itest.tasks.itest-now-setup-julia]
-cmd = "pixi run julia--"
+cmd = "pixi run setup-julia--"
 outputs = [".pixi/envs/itest-now/{Manifest,Project}.toml"]
 
 [feature.tasks-itest.tasks.itest-now]
@@ -621,9 +620,13 @@ description = "- prepare for acceptance testing"
 inputs = ["dist/pypi"]
 outputs = ["build/pip-freeze/atest-now.txt"]
 
+[feature.tasks-atest-now.tasks.atest-now-setup-julia]
+cmd = "pixi run setup-julia--"
+outputs = [".pixi/envs/atest-now/{Manifest,Project}.toml"]
+
 [feature.tasks-atest-now.tasks.atest-now]
-cmd = "pixi run julia-- && pixi run --quiet atest-gh-1111--"
-depends-on = ["atest-now-uv", "lint-rf-dryrun"]
+cmd = "pixi run --quiet atest-gh-1111--"
+depends-on = ["atest-now-setup-julia", "atest-now-uv", "lint-rf-dryrun"]
 description = "- run acceptance tests"
 inputs = ["!**/{.ipynb_checkpoints,__pycache__}/", "atest/"]
 outputs = [
@@ -667,9 +670,13 @@ description = "- prepare for acceptance testing (in the pre-release environment)
 inputs = ["dist/pypi/*.whl"]
 outputs = ["build/pip-freeze/atest-pre.txt"]
 
+[feature.tasks-atest-pre.tasks.atest-pre-setup-julia]
+cmd = "pixi run setup-julia--"
+outputs = [".pixi/envs/atest-pre/{Manifest,Project}.toml"]
+
 [feature.tasks-atest-pre.tasks.atest-pre]
-cmd = "pixi run julia-- && pixi run --quiet atest-gh-1111--"
-depends-on = ["atest-pre-uv"]
+cmd = "pixi run --quiet atest-gh-1111--"
+depends-on = ["atest-pre-setup-julia", "atest-pre-uv"]
 description = "- run acceptance tests (in the pre-release environment)"
 inputs = [
   "!**/{.ipynb_checkpoints,__pycache__}/",

@@ -167,6 +167,10 @@ jobs:
       - name: |-
           Install PyPI distributions for integration testing (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}-uv
+      - if: matrix.epoch == 'now'
+        name: |
+          Set up julia for integration test (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}-setup-julia
       - name: |
           Run integration tests (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}
@@ -217,6 +221,10 @@ jobs:
             .pixi/envs/atest-${{ matrix.epoch }}/Manifest.toml
           key: |
             ${{ env.CACHE_EPOCH }}-julia-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
+      - if: matrix.epoch != 'min'
+        name: |
+          Set up julia for acceptance test (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-setup-julia
       - name: Download PyPI distributions
         uses: actions/download-artifact@v4
         with:

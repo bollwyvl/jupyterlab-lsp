@@ -39,7 +39,7 @@ Setup Server and Browser
     IF    ${wait_for_lsp_log}
         Wait Until File Contains    ${LAB LOG}
         ...    The following Language Servers will be available
-        ...    retries=60
+        ...    retries=120
     ELSE
         # Jupyter Server X.X.X is running at:
         Wait Until File Contains    ${LAB LOG}
@@ -167,6 +167,7 @@ Open Firefox
     ...    browser.download.dir=${downloads}
     ${geckolog} =    Set Variable    ${OUTPUT DIR}${/}logs${/}geckodriver.log
     ${geckolog} =    Set Variable    ${geckolog.replace('\\', '/')}
+    ${geckodriver} =    Set Variable    ${geckodriver.replace('\\', '/')}
 
     Open Browser
     ...    about:blank

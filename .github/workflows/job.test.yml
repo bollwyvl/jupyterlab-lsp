@@ -29,7 +29,7 @@ env:
   JULIA_NUM_THREADS: 2
   # this repo
   ## increase this value to reset all caches
-  CACHE_EPOCH: 8
+  CACHE_EPOCH: 7
   ## keep in sync with `pixi.toml#/$schema`
   PIXI_VERSION: 0.43.3
   ## add `-v` to see more inputs/outputs
@@ -49,6 +49,7 @@ jobs:
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
+          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
@@ -83,6 +84,7 @@ jobs:
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
+          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
@@ -110,6 +112,7 @@ jobs:
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
+          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
@@ -143,9 +146,14 @@ jobs:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
           environments: itest-${{ matrix.epoch }}
+      - name: Download PyPI distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-dist
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
+          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
@@ -162,10 +170,6 @@ jobs:
         name: |
           Set up julia for integration test (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}-setup-julia
-      - name: Download PyPI distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: jplsp-${{ github.run_number }}-dist
       - name: |-
           Install PyPI distributions for integration testing (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}-uv
@@ -202,9 +206,14 @@ jobs:
           pixi-version: v${{ env.PIXI_VERSION }}
           cache: true
           environments: atest-${{ matrix.epoch }}
+      - name: Download PyPI distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: jplsp-${{ github.run_number }}-dist
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
+          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
@@ -221,10 +230,6 @@ jobs:
         name: |
           Set up julia for acceptance test (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-setup-julia
-      - name: Download PyPI distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: jplsp-${{ github.run_number }}-dist
       - name: |-
           Install PyPI distributions for acceptance testing (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-uv

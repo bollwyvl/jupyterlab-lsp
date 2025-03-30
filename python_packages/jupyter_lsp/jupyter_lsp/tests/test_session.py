@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import asyncio
 import os
 from pprint import pprint
 
 import pytest
 
-from ..schema import SERVERS_RESPONSE
+from jupyter_lsp.schema import SERVERS_RESPONSE
+
+from .conftest import MockHandler, MockWebsocketHandler
 
 
 async def assert_status_set(handler, expected_statuses, language_server=None):
@@ -19,8 +23,8 @@ async def assert_status_set(handler, expected_statuses, language_server=None):
         for session_server, session in sorted(payload["sessions"].items())
         if language_server is None or language_server == session_server
     }
-    pprint("statuses", statuses)
-    assert set(statuses.keys()) == expected_statuses
+    pprint({"statuses": statuses})
+    assert set(statuses.values()) == expected_statuses
 
 
 @pytest.mark.asyncio
@@ -79,7 +83,7 @@ async def test_start_unknown(known_unknown_server, handlers, jsonrpc_init_msg):
 
 
 @pytest.mark.asyncio
-async def test_ping(handlers):
+async def test_ping(handlers: tuple[MockHandler, MockWebsocketHandler]):
     """see https://github.com/jupyter-lsp/jupyterlab-lsp/issues/458"""
     a_server = "pylsp"
 
@@ -106,7 +110,7 @@ async def test_ping(handlers):
 
 
 @pytest.mark.asyncio
-async def test_substitute_env(handlers):
+async def test_substitute_env(handlers: tuple[MockHandler, MockWebsocketHandler]):
     """should not leak environment variables"""
     a_server = "pylsp"
 

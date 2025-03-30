@@ -173,7 +173,8 @@ uv-pip-post-- = """
   && pixi run --quiet uv-pip-- list --format=freeze > $FREEZE"""
 uv-pip-pre-- = """
   rm --recursive --force $FREEZE
-  && mkdir --parents build/pip-freeze"""
+  && mkdir --parents build/pip-freeze
+  && pixi run --quiet uv-pip-- uninstall --quiet jupyter_lsp jupyterlab_lsp"""
 uv-pip-whl-- = """
   mkdir --parents $PIXI_PROJECT_ROOT/build
   && export CONSTRAINTS=$PIXI_PROJECT_ROOT/build/constraints.txt
@@ -565,9 +566,13 @@ depends-on = ["dist-pypi-srv"]
 inputs = ["dist/pypi/jupyter_lsp-*.whl"]
 outputs = ["build/pip-freeze/itest-now.txt"]
 
+[feature.tasks-itest.tasks.itest-now-setup-julia]
+cmd = "pixi run julia--"
+outputs = [".pixi/envs/itest-now/{Manifest,Project}.toml"]
+
 [feature.tasks-itest.tasks.itest-now]
-cmd = "pixi run julia-- && python scripts/utest.py"
-depends-on = ["itest-now-uv", "setup-js"]
+cmd = "python scripts/utest.py"
+depends-on = ["itest-now-setup-julia", "itest-now-uv", "setup-js"]
 description = "- run integration tests (in the default environment)"
 inputs = [
   "!**/{__pycache__,build/dist}",
@@ -758,7 +763,7 @@ tectonic = "*"
 texlab = "*"
 
 [feature.deps-itest.dependencies]
-pytest = "<8"
+pytest = ">=8.3"
 pytest-asyncio = "*"
 pytest-cov = "*"
 pytest-github-actions-annotate-failures = "*"
@@ -871,6 +876,7 @@ dev = [
   "deps-atest-py",
   "deps-build",
   "deps-dev",
+  "deps-itest",
   "deps-lab",
   "deps-lab-now",
   "deps-lint",

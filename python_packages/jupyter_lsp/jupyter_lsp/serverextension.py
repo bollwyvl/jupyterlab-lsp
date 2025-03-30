@@ -47,8 +47,13 @@ async def initialize(nbapp, virtual_documents_uri):  # pragma: no cover
     )
 
 
+def _load_jupyter_server_extension(nbapp):  # pragma: no cover
+    """Compatibility import for jupyter_server 1.*."""
+    load_jupyter_server_extension(nbapp)
+
+
 def load_jupyter_server_extension(nbapp):
-    """create a LanguageServerManager and add handlers"""
+    """Create a LanguageServerManager and add handlers."""
     nbapp.add_traits(language_server_manager=traitlets.Instance(LanguageServerManager))
     manager = nbapp.language_server_manager = LanguageServerManager(parent=nbapp)
 
@@ -67,7 +72,7 @@ def load_jupyter_server_extension(nbapp):
         )
         nbapp.log.debug("[lsp] virtualDocumentsUri will be %s", virtual_documents_uri)
     else:  # pragma: no cover
-        nbapp.log.warn(
+        nbapp.log.warning(
             "[lsp] %s did not appear to have a root_dir, could not set rootUri",
             contents,
         )

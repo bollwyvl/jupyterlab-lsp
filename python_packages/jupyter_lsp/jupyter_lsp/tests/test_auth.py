@@ -1,5 +1,7 @@
 """Integration tests of authorization running under jupyter-server."""
 
+from __future__ import annotations
+
 import json
 import os
 import socket
@@ -7,7 +9,7 @@ import subprocess
 import sys
 import time
 import uuid
-from typing import Generator, Optional, Tuple
+from typing import Iterator, Optional, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -49,10 +51,10 @@ def test_auth_websocket(route: str, a_server_url_and_token: Tuple[str, str]) -> 
     verify_response(a_server_url_and_token[0], route)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def a_server_url_and_token(
     tmp_path_factory: pytest.TempPathFactory,
-) -> Generator[Tuple[str, str], None, None]:
+) -> Iterator[Tuple[str, str]]:
     """Start a temporary, isolated jupyter server."""
     token = str(uuid.uuid4())
     port = get_unused_port()
@@ -80,30 +82,33 @@ def a_server_url_and_token(
         USERPROFILE=str(home),
         JUPYTER_CONFIG_DIR=str(server_conf.parent),
     )
-    proc = subprocess.Popen(args, cwd=str(root_dir), env=env, stdin=subprocess.PIPE)
-    url = f"http://{LOCALHOST}:{port}"
-    retries = 20
-    ok = False
-    while not ok and retries:
+    with subprocess.Popen(
+        args, cwd=str(root_dir), env=env, stdin=subprocess.PIPE
+    ) as proc:
+        url = f"http://{LOCALHOST}:{port}"
+        retries = 20
+        ok = False
+        while not ok and retries:
+            try:
+                with urlopen(f"{url}/favicon.ico"):
+                    ok = True
+            except URLError:
+                print(f"[{retries} / 20] ...", flush=True)
+                retries -= 1
+                time.sleep(1)
+        if not ok:  # pragma: no cover
+            raise RuntimeError("the server did not start")
+        yield url, token
         try:
-            ok = urlopen(f"{url}/favicon.ico")
-        except URLError:
-            print(f"[{retries} / 20] ...", flush=True)
-            retries -= 1
-            time.sleep(1)
-    if not ok:  # pragma: no cover
-        raise RuntimeError("the server did not start")
-    yield url, token
-    try:
-        print("shutting down with API...")
-        urlopen(f"{url}/api/shutdown?token={token}", data=[])
-    except URLError:  # pragma: no cover
-        print("shutting down the hard way...")
-        proc.terminate()
-        proc.communicate(b"y\n")
-        proc.wait()
-        proc.kill()
-    proc.wait()
+            print("shutting down with API...")
+            with urlopen(f"{url}/api/shutdown?token={token}", data=[]):
+                print("... shut down OK")
+        except URLError:  # pragma: no cover
+            print("shutting down the hard way...")
+            proc.terminate()
+            proc.communicate(b"y\n")
+            proc.wait()
+            proc.kill()
     assert proc.returncode is not None, "jupyter-server probably still running"
 
 

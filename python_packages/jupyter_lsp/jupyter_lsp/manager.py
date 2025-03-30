@@ -67,7 +67,7 @@ class LanguageServerManager(LanguageServerManagerAPI):
 
     sessions: Dict[Tuple[Text], LanguageServerSession] = (
         Dict_(  # type:ignore[assignment]
-            trait=Instance(LanguageServerSession),
+            value_trait=Instance(LanguageServerSession),
             default_value={},
             help="sessions keyed by language server name",
         )
@@ -87,13 +87,13 @@ class LanguageServerManager(LanguageServerManagerAPI):
     )
 
     all_listeners = List_(  # type:ignore[var-annotated]
-        trait=LoadableCallable  # type:ignore[arg-type]
+        trait=LoadableCallable()  # type:ignore[arg-type]
     ).tag(config=True)
     server_listeners = List_(  # type:ignore[var-annotated]
-        trait=LoadableCallable  # type:ignore[arg-type]
+        trait=LoadableCallable()  # type:ignore[arg-type]
     ).tag(config=True)
     client_listeners = List_(  # type:ignore[var-annotated]
-        trait=LoadableCallable  # type:ignore[arg-type]
+        trait=LoadableCallable()  # type:ignore[arg-type]
     ).tag(config=True)
 
     @default("language_servers")

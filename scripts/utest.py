@@ -21,6 +21,7 @@ STEM = f"{OS}_{PY}".lower()
 REPORTS = BUILD / f"reports/{STEM}"
 CACHE = BUILD / f".cache/{STEM}/.pytest_cache"
 OUT = REPORTS / "utest"
+TEST_SRC = ROOT / "python_packages/jupyter_lsp/jupyter_lsp/tests"
 
 OS_PY_ARGS: dict[tuple[str, str], list[str]] = {
     # notebook and ipykernel releases do not yet support python 3.8 on windows
@@ -61,18 +62,14 @@ def run_tests(*extra_args):
         sys.executable,
         "-m",
         "pytest",
-        # what
-        "--pyargs",
-        "jupyter_lsp",
+        # config
+        f"--config-file={SETUP_CFG}",
         # common
         "-vv",
         "--color=yes",
         "--tb=long",
         "-o",
         f"cache_dir={CACHE}",
-        # TODO: restore
-        # parallel
-        # "-n=auto",
         # cov
         "--cov=jupyter_lsp",
         "--cov-config",
@@ -87,6 +84,7 @@ def run_tests(*extra_args):
         "--self-contained-html",
         *OS_PY_ARGS.get((OS, PY), []),
         *extra_args,
+        str(TEST_SRC),
     ]
     print(">>>", "  ".join(args))
     return subprocess.call(args, cwd=OUT)

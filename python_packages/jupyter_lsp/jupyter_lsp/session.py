@@ -102,6 +102,7 @@ class LanguageServerSession(LoggingConfigurable):
 
         if self.process:
             self.process.terminate()
+            self.process.wait()
             self.process = None
         if self.reader:
             self.reader.close()

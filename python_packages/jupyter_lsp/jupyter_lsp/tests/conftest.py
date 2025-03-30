@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import json
 import os
 import pathlib
 import shutil
 from pathlib import Path
-from typing import Text
+from typing import TYPE_CHECKING, Text
 
+import pytest_asyncio
 from jupyter_server.serverapp import ServerApp
 from pytest import fixture
 from tornado.httpserver import HTTPRequest
@@ -16,6 +19,9 @@ from tornado.web import Application
 from jupyter_lsp import LanguageServerManager
 from jupyter_lsp.constants import APP_CONFIG_D_SECTIONS
 from jupyter_lsp.handlers import LanguageServersHandler, LanguageServerWebSocketHandler
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Iterator
 
 # these should always be available in a test environment
 KNOWN_SERVERS = [
@@ -51,8 +57,11 @@ def extra_node_roots():
 
 
 @fixture
-def manager() -> LanguageServerManager:
-    return LanguageServerManager(**extra_node_roots())
+def manager() -> Iterator[LanguageServerManager]:
+    manager: LanguageServerManager = LanguageServerManager(**extra_node_roots())
+    yield manager
+    for session in manager.sessions.values():
+        session.stop()
 
 
 @fixture
@@ -88,12 +97,14 @@ def known_unknown_server(request):
 
 
 @fixture
-def handlers(manager):
+def handlers(
+    manager: LanguageServerManager,
+) -> Iterator[tuple[MockHandler, MockWebsocketHandler]]:
     ws_handler = MockWebsocketHandler()
     ws_handler.initialize(manager)
     handler = MockHandler()
     handler.initialize(manager)
-    return handler, ws_handler
+    yield handler, ws_handler
 
 
 @fixture
@@ -120,9 +131,13 @@ def jsonrpc_init_msg():
     )
 
 
-@fixture
-def app():
-    return MockServerApp()
+@pytest_asyncio.fixture
+async def app() -> AsyncIterator[MockServerApp]:
+    app_ = MockServerApp()
+    yield app_
+    if hasattr(app_, "_http_server"):
+        app_.http_server.stop()
+        await app_.http_server.close_all_connections()
 
 
 # mocks
@@ -160,4 +175,4 @@ class MockHandler(LanguageServersHandler):
 
 
 class MockServerApp(ServerApp):
-    pass
+    language_server_manager: LanguageServerManager

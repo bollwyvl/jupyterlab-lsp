@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import socket
 import subprocess
 import sys
 import time
@@ -15,9 +14,8 @@ from urllib.request import urlopen
 
 import pytest
 
-from .conftest import KNOWN_SERVERS, extra_node_roots
+from .conftest import KNOWN_SERVERS, LOCALHOST, extra_node_roots
 
-LOCALHOST = "127.0.0.1"
 REST_ROUTES = ["/lsp/status"]
 WS_ROUTES = [f"/lsp/ws/{ls}" for ls in KNOWN_SERVERS]
 SUBPROCESS_PREFIX = json.loads(
@@ -53,11 +51,10 @@ def test_auth_websocket(route: str, a_server_url_and_token: Tuple[str, str]) -> 
 
 @pytest.fixture
 def a_server_url_and_token(
-    tmp_path_factory: pytest.TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory, unused_port: int
 ) -> Iterator[Tuple[str, str]]:
     """Start a temporary, isolated jupyter server."""
     token = str(uuid.uuid4())
-    port = get_unused_port()
 
     root_dir = tmp_path_factory.mktemp("root_dir")
     home = tmp_path_factory.mktemp("home")
@@ -74,7 +71,12 @@ def a_server_url_and_token(
     }
 
     server_conf.write_text(json.dumps(config_data), encoding="utf-8")
-    args = [*SUBPROCESS_PREFIX, "jupyter_server", f"--port={port}", "--no-browser"]
+    args = [
+        *SUBPROCESS_PREFIX,
+        "jupyter_server",
+        f"--port={unused_port}",
+        "--no-browser",
+    ]
     print("server args", args)
     env = dict(os.environ)
     env.update(
@@ -85,7 +87,7 @@ def a_server_url_and_token(
     with subprocess.Popen(
         args, cwd=str(root_dir), env=env, stdin=subprocess.PIPE
     ) as proc:
-        url = f"http://{LOCALHOST}:{port}"
+        url = f"http://{LOCALHOST}:{unused_port}"
         retries = 20
         ok = False
         while not ok and retries:
@@ -112,19 +114,6 @@ def a_server_url_and_token(
     assert proc.returncode is not None, "jupyter-server probably still running"
 
 
-def get_unused_port():
-    """Get an unused port by trying to listen to any random port.
-
-    Probably could introduce race conditions if inside a tight loop.
-    """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((LOCALHOST, 0))
-    sock.listen(1)
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
-
-
 def verify_response(
     base_url: str, route: str, expect_code: int = 403
 ) -> Optional[bytes]:
@@ -133,9 +122,9 @@ def verify_response(
     code = None
     url = f"{base_url}{route}"
     try:
-        res = urlopen(url)
-        code = res.getcode()
-        body = res.read()
+        with urlopen(url) as res:
+            code = res.getcode()
+            body = res.read()
     except HTTPError as err:
         code = err.getcode()
     assert code == expect_code, f"HTTP {code} (not expected {expect_code}) for {url}"

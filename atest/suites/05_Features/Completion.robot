@@ -309,7 +309,7 @@ Works With Incorrect Theme
     Wait Until Page Contains Element    ${COMPLETER_BOX} .jp-Completer-monogram
 
 Completes Correctly With R Double And Triple Colon
-    [Tags]    gh:1111
+    [Tags]    gh:1111    ls:r-language-server
     [Setup]    Prepare File for Editing    R    completion    completion.R
     Place Cursor In File Editor At    2    7
     Wait Until Fully Initialized
@@ -327,6 +327,7 @@ Completes Correctly With R Double And Triple Colon
     [Teardown]    Clean Up After Working With File    completion.R
 
 Completes Large Namespaces
+    [Tags]    ls:r-language-server
     [Setup]    Prepare File for Editing    R    completion    completion.R
     Place Cursor In File Editor At    6    7
     Wait Until Fully Initialized
@@ -335,6 +336,7 @@ Completes Large Namespaces
     [Teardown]    Clean Up After Working With File    completion.R
 
 Shows Documentation With CompletionItem Resolve
+    [Tags]    ls:r-language-server
     [Setup]    Prepare File for Editing    R    completion    completion.R
     Configure JupyterLab Plugin    {"showDocumentationPanel": true}    plugin id=${MANAGER PLUGIN ID}
     Place Cursor In File Editor At    8    7
@@ -362,7 +364,7 @@ Shows Only Relevant Suggestions In Known Magics
     Completer Should Suggest    hash
 
 Completes In R Magics
-    [Tags]    gh:1111
+    [Tags]    gh:1111    ls:r-language-server
     # Proper completion in R magics needs to be tested as:
     # - R magic extractor uses a tailor-made replacer function, not tested elsewhere
     # - R lanugage server is very sensitive to off-by-one errors (see https://github.com/REditorSupport/languageserver/issues/395)

@@ -507,12 +507,12 @@ inputs = [
 ]
 
 [feature.tasks-lint.tasks.lint-rf-dryrun]
-cmd = "pixi run atest-gh-1111-- --dryrun --console dotted"
+cmd = "python scripts/atest.py --dryrun --console dotted"
 description = "- check robot files with robot --dryrun"
 inputs = [
   "!**/{node_modules,.ipynb_checkpoints,build,dist,__pycache__}/",
-  "atest/**/*.{robot,resource,py}",
-  "scripts/{atest}.py",
+  "atest/",
+  "scripts/atest.py",
 ]
 outputs = ["build/reports/{darwin_312,linux_312,windows_312}/atest/dry_run/"]
 
@@ -578,7 +578,9 @@ outputs = ["build/pip-freeze/itest-now.txt"]
 
 [feature.tasks-itest.tasks.itest-now-setup-julia]
 cmd = "pixi run setup-julia--"
-outputs = [".pixi/envs/itest-now/{Manifest,Project}.toml"]
+outputs = [
+  ".pixi/envs/itest-now/share/julia/environments/itest-now/{Manifest,Project}.toml",
+]
 
 [feature.tasks-itest.tasks.itest-now]
 cmd = "python scripts/utest.py"
@@ -601,7 +603,7 @@ outputs = ["build/pip-freeze/itest-min.txt"]
 [feature.tasks-itest-min.tasks.itest-min]
 cmd = """
   python scripts/utest.py
-    -k "not (test_r_package_detection or julia or ((test_listeners or test_start_known) and not pylsp))"
+    -k "not (test_r_package_detection or julia or ((listeners or start_known or websocket) and not pylsp))"
 """
 depends-on = ["itest-min-uv"]
 description = "- run the integration tests (in the oldest supported environment)"
@@ -622,7 +624,9 @@ outputs = ["build/pip-freeze/atest-now.txt"]
 
 [feature.tasks-atest-now.tasks.atest-now-setup-julia]
 cmd = "pixi run setup-julia--"
-outputs = [".pixi/envs/atest-now/{Manifest,Project}.toml"]
+outputs = [
+  ".pixi/envs/atest-now/share/julia/environments/atest-now/{Manifest,Project}.toml",
+]
 
 [feature.tasks-atest-now.tasks.atest-now]
 cmd = "pixi run --quiet atest-gh-1111--"
@@ -672,10 +676,15 @@ outputs = ["build/pip-freeze/atest-pre.txt"]
 
 [feature.tasks-atest-pre.tasks.atest-pre-setup-julia]
 cmd = "pixi run setup-julia--"
-outputs = [".pixi/envs/atest-pre/{Manifest,Project}.toml"]
+outputs = [
+  ".pixi/envs/atest-pre/share/julia/environments/atest-pre/{Manifest,Project}.toml",
+]
 
 [feature.tasks-atest-pre.tasks.atest-pre]
-cmd = "pixi run --quiet atest-gh-1111--"
+cmd = """
+  pixi run --quiet atest-gh-1111--
+    --exclude=ls:r-language-server
+"""
 depends-on = ["atest-pre-setup-julia", "atest-pre-uv"]
 description = "- run acceptance tests (in the pre-release environment)"
 inputs = [

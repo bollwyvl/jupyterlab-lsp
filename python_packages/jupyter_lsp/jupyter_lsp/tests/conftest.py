@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import shutil
+import socket
 from pathlib import Path
 from typing import TYPE_CHECKING, Text
 
@@ -49,6 +50,8 @@ KNOWN_SERVERS += sum(
 )
 
 KNOWN_UNKNOWN_SERVERS = ["foo-language-server"]
+
+LOCALHOST = "127.0.0.1"
 
 
 def extra_node_roots():
@@ -132,9 +135,11 @@ def jsonrpc_init_msg():
 
 
 @pytest_asyncio.fixture
-async def app() -> AsyncIterator[MockServerApp]:
-    app_ = MockServerApp()
+async def app(unused_port: int) -> AsyncIterator[MockServerApp]:
+    app_ = MockServerApp(port=unused_port, ip=LOCALHOST)
+
     yield app_
+
     if hasattr(app_, "_http_server"):
         app_.http_server.stop()
         await app_.http_server.close_all_connections()
@@ -176,3 +181,21 @@ class MockHandler(LanguageServersHandler):
 
 class MockServerApp(ServerApp):
     language_server_manager: LanguageServerManager
+
+    def _find_http_port(self) -> None:
+        """Overload port finding, to avoid unclosed socket warnings."""
+
+
+@fixture
+def unused_port() -> int:
+    """Get an unused port by trying to listen to any random port.
+
+    Probably could introduce race conditions if inside a tight loop.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((LOCALHOST, 0))
+    sock.listen(1)
+    port = sock.getsockname()[1]
+    assert isinstance(port, int)
+    sock.close()
+    return port

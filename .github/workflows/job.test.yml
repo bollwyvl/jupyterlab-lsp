@@ -29,9 +29,9 @@ env:
   JULIA_NUM_THREADS: 2
   # this repo
   ## increase this value to reset all caches
-  CACHE_EPOCH: 7
-  ## keep in sync with `pixi.toml#/$schema`
-  PIXI_VERSION: 0.43.3
+  CACHE_EPOCH: 8
+  ## TODO: keep in sync with `pixi.toml#/$schema`
+  PIXI_VERSION: 0.44.0
   ## add `-v` to see more inputs/outputs
   PIXI_RUN: pixi run --no-install --locked
 
@@ -49,12 +49,11 @@ jobs:
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
-          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+            ${{ env.CACHE_EPOCH }}-node-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - name: Install nodejs dependencies
         run: ${{ env.PIXI_RUN }} setup-js && touch node_modules/.ci-skip-yarn
       - name: Build all intermediates
@@ -87,7 +86,7 @@ jobs:
             !node_modules/.cache/
             **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+            ${{ env.CACHE_EPOCH }}-node-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - name: Install nodejs dependencies
         run: ${{ env.PIXI_RUN }} setup-js && echo "" > node_modules/.ci-skip-yarn
 
@@ -109,7 +108,7 @@ jobs:
             !node_modules/.cache/
             **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+            ${{ env.CACHE_EPOCH }}-node-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - name: Apply source formatting
         run: ${{ env.PIXI_RUN }} fix
       - name: Run source checks
@@ -136,7 +135,7 @@ jobs:
             !node_modules/.cache/
             **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+            ${{ env.CACHE_EPOCH }}-node-${{ hashFiles('pixi.lock', 'yarn.lock') }}
       - run: ${{ env.PIXI_RUN }} docs
       - uses: actions/upload-artifact@v4
         with:
@@ -169,16 +168,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jplsp-${{ github.run_number }}-dist
+      # cache
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
-          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - name: Cache julia
+            ${{ env.CACHE_EPOCH }}-node-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      # setup
+      - name: Cache julia language server packages
         uses: actions/cache@v4
         with:
           path: |
@@ -192,9 +192,11 @@ jobs:
       - name: |-
           Install PyPI distributions for integration testing (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}-uv
+      # itest
       - name: |
           Run integration tests (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps itest-${{ matrix.epoch }}
+      # reporting
       - if: always()
         name: Publish browser test output
         uses: actions/upload-artifact@v4
@@ -229,29 +231,42 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jplsp-${{ github.run_number }}-dist
+      # caches
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
-          enableCrossOsArchive: true
           path: |
             !node_modules/.cache/
             **/node_modules/
           key: |
-            ${{ env.CACHE_EPOCH }}-node-build-${{ hashFiles('pixi.lock', 'yarn.lock') }}
-      - name: Cache julia
+            ${{ env.CACHE_EPOCH }}-node-${{ hashFiles('pixi.lock', 'yarn.lock') }}
+      - name: Cache julia language server packages
         uses: actions/cache@v4
         with:
           path: |
             .pixi/envs/atest-${{ matrix.epoch }}/share/julia
           key: |
-            ${{ env.CACHE_EPOCH }}-julia-atest-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
+            ${{ env.CACHE_EPOCH }}-atest-julia-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock') }}
+      - name: Cache tex packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/.cache/tectonic
+          key: |
+            ${{ env.CACHE_EPOCH }}-tex-${{ matrix.epoch }}-${{ matrix.os }}-${{ hashFiles('pixi.lock', 'atest/_examples/example.tex') }}
+      # preflight, separated for log clarity
       - if: matrix.epoch != 'min'
         name: |
           Set up julia for acceptance test (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-setup-julia
+      - if: matrix.epoch != 'min'
+        name: |
+          Set up tex for acceptance test (epoch: ${{ matrix.epoch }})
+        run: ${{ env.PIXI_RUN }} --skip-deps --environment atest-${{ matrix.epoch }} tectonic-cache--
       - name: |-
           Install PyPI distributions for acceptance testing (epoch: ${{ matrix.epoch }})
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}-uv
+      # atest
       - name: |-
           Run acceptance tests until first failure, ignore failure (epoch: ${{ matrix.epoch }})
         continue-on-error: true
@@ -271,6 +286,7 @@ jobs:
           ATEST_ATTEMPT: 2
           ATEST_RETRIES: 3
         run: ${{ env.PIXI_RUN }} --skip-deps atest-${{ matrix.epoch }}
+      # reporting
       - if: always()
         name: Summarize acceptance test results
         run: ${{ env.PIXI_RUN }} -e atest-${{ matrix.epoch }} ci-summary-atest

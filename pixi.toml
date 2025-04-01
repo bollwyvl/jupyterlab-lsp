@@ -1,4 +1,4 @@
-"$schema" = "https://pixi.sh/v0.43.3/schema/manifest/schema.json"
+"$schema" = "https://pixi.sh/v0.44.0/schema/manifest/schema.json"
 
 # # project automation for `jupyterlab-lsp`
 #
@@ -218,9 +218,16 @@ setup-julia-- = """
   julia --eval 'using Pkg; Pkg.add(Pkg.PackageSpec(;name="LanguageServer", version="4.1.0"))'
   || echo "julia not installed or failed for some reason"
 """
+### latex
+tectonic-cache-- = """
+  export $(pixi run tectonic-cache-env--)
+  && python scripts/tectonic_cache.py
+"""
+tectonic-cache-env-- = "echo TECTONIC_CACHE=$PIXI_PROJECT_ROOT/build/.cache/tectonic"
 ### test
 atest-gh-1111-- = """
-  echo "running acceptance tests without known failures"
+  export $(pixi run tectonic-cache-env--)
+  && echo "running acceptance tests without known failures"
   && echo "see: https://github.com/jupyter-lsp/jupyterlab-lsp/issues/1111"
   && python scripts/atest.py --exclude gh:1111
 """
@@ -977,3 +984,4 @@ channels = [
 ]
 name = "jp-lsp"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+requires-pixi = ">=0.44.0"

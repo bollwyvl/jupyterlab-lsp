@@ -53,6 +53,7 @@ Jumps To References From Context Menu
     [Teardown]    Clean Up After Working With File    jump_references.py
 
 Ctrl Click And Jumping Back Works
+    [Tags]    gh:1111
     [Setup]    Prepare File for Editing    Python    editor    jump.py
     Configure JupyterLab Plugin    {"modifierKey": "Accel"}    plugin id=${JUMP PLUGIN ID}
     Wait Until Fully Initialized

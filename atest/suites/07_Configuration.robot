@@ -54,6 +54,7 @@ YAML
 
 Markdown
     [Documentation]    different englishes spell colou?r differently
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics
     ...    Markdown
     ...    example.md
@@ -64,7 +65,7 @@ Markdown
 
 LaTeX
     [Documentation]    diagnostics only appear if configured
-    [Tags]    language:latex
+    [Tags]    language:latex    gh:1111
     ${needs reload} =    Set Variable    "${OS}" == "Windows"
     Settings Should Change Editor Diagnostics    LaTeX    example.tex    texlab
     ...    {"chktex.onOpenAndSave": true, "chktex.onEdit": true}

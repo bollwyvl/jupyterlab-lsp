@@ -99,10 +99,10 @@ def known_unknown_server(request):
     return request.param
 
 
-@fixture
-def handlers(
+@pytest_asyncio.fixture
+async def handlers(
     manager: LanguageServerManager,
-) -> Iterator[tuple[MockHandler, MockWebsocketHandler]]:
+) -> AsyncIterator[tuple[MockHandler, MockWebsocketHandler]]:
     ws_handler = MockWebsocketHandler()
     ws_handler.initialize(manager)
     handler = MockHandler()

@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import json
 import os
 import pathlib
 import shutil
+import socket
 from pathlib import Path
-from typing import Text
+from typing import TYPE_CHECKING, Text
 
+import pytest_asyncio
 from jupyter_server.serverapp import ServerApp
 from pytest import fixture
 from tornado.httpserver import HTTPRequest
@@ -16,6 +20,9 @@ from tornado.web import Application
 from jupyter_lsp import LanguageServerManager
 from jupyter_lsp.constants import APP_CONFIG_D_SECTIONS
 from jupyter_lsp.handlers import LanguageServersHandler, LanguageServerWebSocketHandler
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Iterator
 
 # these should always be available in a test environment
 KNOWN_SERVERS = [
@@ -44,6 +51,8 @@ KNOWN_SERVERS += sum(
 
 KNOWN_UNKNOWN_SERVERS = ["foo-language-server"]
 
+LOCALHOST = "127.0.0.1"
+
 
 def extra_node_roots():
     root = Path(os.environ.get("JLSP_TEST_ROOT") or Path.cwd())
@@ -51,8 +60,11 @@ def extra_node_roots():
 
 
 @fixture
-def manager() -> LanguageServerManager:
-    return LanguageServerManager(**extra_node_roots())
+def manager() -> Iterator[LanguageServerManager]:
+    manager: LanguageServerManager = LanguageServerManager(**extra_node_roots())
+    yield manager
+    for session in manager.sessions.values():
+        session.stop()
 
 
 @fixture
@@ -87,13 +99,15 @@ def known_unknown_server(request):
     return request.param
 
 
-@fixture
-def handlers(manager):
+@pytest_asyncio.fixture
+async def handlers(
+    manager: LanguageServerManager,
+) -> AsyncIterator[tuple[MockHandler, MockWebsocketHandler]]:
     ws_handler = MockWebsocketHandler()
     ws_handler.initialize(manager)
     handler = MockHandler()
     handler.initialize(manager)
-    return handler, ws_handler
+    yield handler, ws_handler
 
 
 @fixture
@@ -120,9 +134,15 @@ def jsonrpc_init_msg():
     )
 
 
-@fixture
-def app():
-    return MockServerApp()
+@pytest_asyncio.fixture
+async def app(unused_port: int) -> AsyncIterator[MockServerApp]:
+    app_ = MockServerApp(port=unused_port, ip=LOCALHOST)
+
+    yield app_
+
+    if hasattr(app_, "_http_server"):
+        app_.http_server.stop()
+        await app_.http_server.close_all_connections()
 
 
 # mocks
@@ -160,4 +180,22 @@ class MockHandler(LanguageServersHandler):
 
 
 class MockServerApp(ServerApp):
-    pass
+    language_server_manager: LanguageServerManager
+
+    def _find_http_port(self) -> None:
+        """Overload port finding, to avoid unclosed socket warnings."""
+
+
+@fixture
+def unused_port() -> int:
+    """Get an unused port by trying to listen to any random port.
+
+    Probably could introduce race conditions if inside a tight loop.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((LOCALHOST, 0))
+    sock.listen(1)
+    port = sock.getsockname()[1]
+    assert isinstance(port, int)
+    sock.close()
+    return port

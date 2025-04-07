@@ -11,7 +11,6 @@
     "eslint-plugin-jest": "^27.1.6",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.31.11",
-    "husky": "^3.0.9",
     "lerna": "~6.5.0",
     "npm-run-all": "^4.1.5",
     "precise-commits": "^1.0.2",
@@ -28,9 +27,6 @@
     "vscode-json-languageservice": "^4.1.8",
     "yaml-language-server": "^1.0.0",
     "yarn-berry-deduplicate": "^6.1.1"
-  },
-  "husky": {
-    "hooks": {}
   },
   "prettier": {
     "arrowParens": "avoid",

@@ -1,6 +1,6 @@
-""" check internal version consistency
+"""check internal version consistency
 
-    these should be quick to run (not invoke any other process)
+these should be quick to run (not invoke any other process)
 """
 
 # pylint: disable=redefined-outer-name,unused-variable
@@ -21,11 +21,9 @@ from nbconvert.preprocessors import ExecutePreprocessor
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
+from ruamel.yaml import YAML as _YAML
 
-try:
-    import ruamel.yaml as yaml
-except ImportError:
-    import ruamel_yaml as yaml
+YAML = _YAML(typ="safe")
 
 ROOT = pathlib.Path.cwd()
 
@@ -75,7 +73,7 @@ PY_FRONT_NAME = "jupyterlab-lsp"
 
 # CI stuff
 PIPE_FILE = ROOT / ".github/workflows/job.test.yml"
-PIPELINES = yaml.safe_load(PIPE_FILE.read_text(encoding="utf-8"))
+PIPELINES = YAML.load(PIPE_FILE.read_text(encoding="utf-8"))
 PIPE_VARS = PIPELINES["env"]
 DOCS = ROOT / "docs"
 
@@ -106,7 +104,7 @@ def the_contributing_doc():
 
 @pytest.fixture(scope="module")
 def the_binder_env():
-    return yaml.safe_load(BINDER_ENV.read_text(encoding="utf-8"))
+    return YAML.load(BINDER_ENV.read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")

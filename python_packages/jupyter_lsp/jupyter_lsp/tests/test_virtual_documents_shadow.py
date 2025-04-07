@@ -6,8 +6,7 @@ from typing import List
 import pytest
 
 from jupyter_lsp import LanguageServerManager
-
-from ..virtual_documents_shadow import (
+from jupyter_lsp.virtual_documents_shadow import (
     EditableFile,
     ShadowFilesystemError,
     extract_or_none,

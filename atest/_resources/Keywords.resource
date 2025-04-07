@@ -37,12 +37,13 @@ Setup Server and Browser
     ...    env:JUPYTER_NO_CONFIG=${EMPTY}
     Set Global Variable    ${SERVER}    ${server}
     IF    ${wait_for_lsp_log}
-        Wait Until File Contains   ${LAB LOG}
-        ...  The following Language Servers will be available
+        Wait Until File Contains    ${LAB LOG}
+        ...    The following Language Servers will be available
+        ...    retries=120
     ELSE
         # Jupyter Server X.X.X is running at:
-        Wait Until File Contains   ${LAB LOG}
-        ...  is running at:
+        Wait Until File Contains    ${LAB LOG}
+        ...    is running at:
     END
     Open JupyterLab
     Read Page Config
@@ -144,17 +145,51 @@ Wait For Splash
     Execute Javascript    window.onbeforeunload \= function (){}
 
 Open JupyterLab
-    Set Environment Variable    MOZ_HEADLESS    ${HEADLESS}
-    ${geckodriver} =    Which    geckodriver
-    Should Not Be Equal As Strings    ${geckodriver}    None
-    ...    geckodriver not found, do you need to install firefox-geckodriver?
-    ${options} =    Make Firefox Options
-    Open Browser    ${URL}lab?reset&token=${TOKEN}
-    ...    browser=firefox
-    ...    executable_path=${geckodriver}
-    ...    service_log_path=${GECKODRIVER LOG}
-    ...    options=${options}
+    Open Firefox
+    Go To    ${URL}lab?reset&token=${TOKEN}
     Wait Until Keyword Succeeds    3x    5s    Wait For Splash
+
+Open Firefox
+    [Documentation]    Start an instrumented firefox.
+    [Arguments]    ${downloads}=${OUTPUT_DIR}${/}downloads
+    ${geckodriver} =    Which    geckodriver
+    ${firefox} =    Which    firefox
+    Should Not Be Empty    ${geckodriver}
+    ...    geckodriver was not found: ensure it, and firefox, are installed and on $PATH
+    Set Environment Variable    MOZ_HEADLESS    ${HEADLESS}
+    Create Directory    ${downloads}
+    ${ff_options} =    Get Firefox Options
+    ...    ${firefox}
+    ...    ui.prefersReducedMotion=${1}
+    ...    devtools.console.stdout.content=${True}
+    ...    browser.download.folderList=${2}
+    ...    browser.download.manager.showWhenStarting=${FALSE}
+    ...    browser.download.dir=${downloads}
+    ${geckolog} =    Set Variable    ${OUTPUT DIR}${/}logs${/}geckodriver.log
+    ${geckolog} =    Set Variable    ${geckolog.replace('\\', '/')}
+    ${geckodriver} =    Set Variable    ${geckodriver.replace('\\', '/')}
+
+    Open Browser
+    ...    about:blank
+    ...    headlessfirefox
+    ...    options=${ff_options}
+    ...    service=log_output='${geckolog}'; executable_path='${geckodriver}'
+
+Get Firefox Options
+    [Documentation]    Initialize and configure Firefox options
+    [Arguments]    ${firefox}    &{prefs}
+    ${ff_options} =    Evaluate    selenium.webdriver.firefox.options.Options()
+    ...    selenium.webdriver.firefox.options
+    ${ff_options.binary_location} =    Set Variable    ${firefox}
+    Set Firefox Preferences    ${ff_options}    &{prefs}
+    RETURN    ${ff_options}
+
+Set Firefox Preferences
+    [Documentation]    Set Firefox options
+    [Arguments]    ${ff_options}    &{prefs}
+    FOR    ${pref}    ${value}    IN    &{prefs}
+        Call Method    ${ff_options}    set_preference    ${pref}    ${value}
+    END
 
 Close JupyterLab
     Close All Browsers
@@ -343,8 +378,8 @@ Enter Cell Editor
     Click Element    css:.jp-Cell:nth-child(${cell_nr}) .cm-line:nth-child(${line})
     # So it should be focused after click right? Well, not when using this driver
     # in JupyterLab 4.1 - we still need to press enter apparently.
-    ${focused}    Get Element Count    css:.jp-Cell:nth-child(${cell_nr}) .cm-focused
-    Run Keyword If    ${focused} == 0    Press Keys    None    ENTER
+    ${focused} =    Get Element Count    css:.jp-Cell:nth-child(${cell_nr}) .cm-focused
+    IF    ${focused} == 0    Press Keys    None    ENTER
     Wait Until Page Contains Element    css:.jp-Cell:nth-child(${cell_nr}) .cm-focused
     # clicking on line does not appear sufficient in CM6 (but still useful because it ensures we have it in view
     Execute JavaScript

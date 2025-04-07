@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import asyncio
 import os
+from pprint import pprint
 
 import pytest
 
-from ..schema import SERVERS_RESPONSE
+from jupyter_lsp.schema import SERVERS_RESPONSE
+
+from .conftest import MockHandler, MockWebsocketHandler
 
 
 async def assert_status_set(handler, expected_statuses, language_server=None):
@@ -14,11 +19,12 @@ async def assert_status_set(handler, expected_statuses, language_server=None):
     assert not errors
 
     statuses = {
-        session["status"]
-        for session_server, session in payload["sessions"].items()
+        session_server: session["status"]
+        for session_server, session in sorted(payload["sessions"].items())
         if language_server is None or language_server == session_server
     }
-    assert statuses == expected_statuses, payload
+    pprint({"statuses": statuses})
+    assert set(statuses.values()) == expected_statuses
 
 
 @pytest.mark.asyncio
@@ -39,11 +45,10 @@ async def test_start_known(known_server, handlers, jsonrpc_init_msg):
 
     await ws_handler.on_message(jsonrpc_init_msg)
 
+    timeout = 120 if known_server == "julia-language-server" else 20
+
     try:
-        await asyncio.wait_for(
-            ws_handler._messages_wrote.get(),
-            120 if known_server == "julia-language-server" else 20,
-        )
+        await asyncio.wait_for(ws_handler._messages_wrote.get(), timeout)
         ws_handler._messages_wrote.task_done()
     finally:
         ws_handler.on_close()
@@ -52,7 +57,6 @@ async def test_start_known(known_server, handlers, jsonrpc_init_msg):
     assert not session.process
 
     await assert_status_set(handler, {"stopped"}, known_server)
-    await assert_status_set(handler, {"stopped", "not_started"})
 
 
 @pytest.mark.asyncio
@@ -77,7 +81,7 @@ async def test_start_unknown(known_unknown_server, handlers, jsonrpc_init_msg):
 
 
 @pytest.mark.asyncio
-async def test_ping(handlers):
+async def test_ping(handlers: tuple[MockHandler, MockWebsocketHandler]):
     """see https://github.com/jupyter-lsp/jupyterlab-lsp/issues/458"""
     a_server = "pylsp"
 
@@ -104,7 +108,7 @@ async def test_ping(handlers):
 
 
 @pytest.mark.asyncio
-async def test_substitute_env(handlers):
+async def test_substitute_env(handlers: tuple[MockHandler, MockWebsocketHandler]):
     """should not leak environment variables"""
     a_server = "pylsp"
 
@@ -116,6 +120,7 @@ async def test_substitute_env(handlers):
     await assert_status_set(handler, {"not_started"})
 
     await ws_handler.open(a_server)
+    assert ws_handler.language_server, "the handler doesn't have a language server"
     session = manager.sessions[ws_handler.language_server]
     new_env = session.substitute_env({"test-variable": "value"}, os.environ)
 

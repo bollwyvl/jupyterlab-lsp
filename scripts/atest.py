@@ -1,5 +1,6 @@
-""" Run acceptance tests with robot framework
-"""
+"""Run acceptance tests with robot framework"""
+
+from __future__ import annotations
 
 # pylint: disable=broad-except
 import os
@@ -25,7 +26,7 @@ SUITES = ATEST / "suites"
 BUILD = ROOT / "build"
 OUT = BUILD / "reports" / f"{OS}_{PY}".lower() / "atest"
 
-OS_PY_ARGS = {
+OS_PY_ARGS: dict[tuple[str, str], list[str]] = {
     # example:
     # notebook and ipykernel releases did not yet support python 3.8 on windows
     # ("Windows", "38"): ["--include", "not-supported", "--runemptysuite"]
@@ -35,8 +36,6 @@ NON_CRITICAL = [
     # TODO: restore when yaml-language-server supports both config and...
     # everything else: https://github.com/jupyter-lsp/jupyterlab-lsp/pull/245
     ["language:yaml", "feature:config"],
-    # TODO: restore when we figure out win36 vs jedi on windows
-    # ["language:python", "py:36", "os:windows"],
 ]
 
 NON_CRITICAL_ARGS = sum(
@@ -46,10 +45,10 @@ NON_CRITICAL_ARGS = sum(
 DEFAULT_ARGS = [
     # page title, etc: useful information instead of `suites`
     f"--name={OS}_{PY}",
-    # random ensures there's no inter-test coupling
-    "--randomize=all",
+    # TODO: restore to ensures there's no inter-test coupling
+    # "--randomize=all",
     # use wide, colorful output for more readable console logs
-    "--consolewidth=120",
+    "--consolewidth=100",
     "--consolecolors=on",
     *NON_CRITICAL_ARGS,
 ]

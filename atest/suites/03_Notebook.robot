@@ -47,6 +47,7 @@ Moving Cells Around
     [Teardown]    Clean Up After Working With File    Python.ipynb
 
 Foreign Extractors
+    [Tags]    gh:1111
     ${file} =    Set Variable    Foreign extractors.ipynb
     Configure JupyterLab Plugin
     ...    {"language_servers": {"texlab": {"serverSettings": {"chktex.onOpenAndSave": true}}, "bash-langauge-server": {"bashIde.enableSourceErrorDiagnostics": true}}, "pylsp": {"priority": 1000}}

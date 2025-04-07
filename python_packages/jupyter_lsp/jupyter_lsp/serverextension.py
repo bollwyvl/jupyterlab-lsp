@@ -1,8 +1,10 @@
-""" add language server support to the running jupyter notebook application
-"""
+"""add language server support to the running jupyter notebook application"""
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import traitlets
 from tornado import ioloop
@@ -11,14 +13,19 @@ from .handlers import add_handlers
 from .manager import LanguageServerManager
 from .paths import normalized_uri
 
+if TYPE_CHECKING:
+    from jupyter_server.serverapp import ServerApp
 
-async def initialize(nbapp, virtual_documents_uri):  # pragma: no cover
+
+async def initialize(
+    nbapp: ServerApp, virtual_documents_uri: str
+) -> None:  # pragma: no cover
     """Perform lazy initialization."""
     import concurrent.futures
 
     from .virtual_documents_shadow import setup_shadow_filesystem
 
-    manager: LanguageServerManager = nbapp.language_server_manager
+    manager: LanguageServerManager = getattr(nbapp, "language_server_manager")
 
     with concurrent.futures.ThreadPoolExecutor() as pool:
         await nbapp.io_loop.run_in_executor(pool, manager.initialize)
@@ -48,10 +55,20 @@ async def initialize(nbapp, virtual_documents_uri):  # pragma: no cover
     )
 
 
-def load_jupyter_server_extension(nbapp):
-    """create a LanguageServerManager and add handlers"""
-    nbapp.add_traits(language_server_manager=traitlets.Instance(LanguageServerManager))
-    manager = nbapp.language_server_manager = LanguageServerManager(parent=nbapp)
+def _load_jupyter_server_extension(nbapp: ServerApp) -> None:
+    """Compatibility shim for jupyter_server 1.*."""
+    load_jupyter_server_extension(nbapp)
+
+
+def load_jupyter_server_extension(nbapp: ServerApp) -> None:
+    """Create a LanguageServerManager and add handlers."""
+    manager = LanguageServerManager(parent=nbapp)
+
+    nbapp.add_traits(
+        language_server_manager=traitlets.Instance(
+            LanguageServerManager, default_value=manager
+        )
+    )
 
     contents = nbapp.contents_manager
     page_config = nbapp.web_app.settings.setdefault("page_config_data", {})
@@ -68,7 +85,7 @@ def load_jupyter_server_extension(nbapp):
         )
         nbapp.log.debug("[lsp] virtualDocumentsUri will be %s", virtual_documents_uri)
     else:  # pragma: no cover
-        nbapp.log.warn(
+        nbapp.log.warning(
             "[lsp] %s did not appear to have a root_dir, could not set rootUri",
             contents,
         )

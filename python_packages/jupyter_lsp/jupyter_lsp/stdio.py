@@ -1,4 +1,4 @@
-""" Language Server stdio-mode readers
+"""Language Server stdio-mode readers
 
 Parts of this code are derived from:
 

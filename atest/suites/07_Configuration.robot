@@ -19,6 +19,7 @@ Python Nested
 
 Python Dotted
     [Documentation]    pyflakes is enabled by default, but flake8 is not
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics    Python    style.py    pylsp
     ...    {"pylsp.plugins.flake8.enabled": true, "pylsp.plugins.pyflakes.enabled": false}
     ...    undefined name 'foo' (pyflakes)
@@ -26,6 +27,7 @@ Python Dotted
 
 Python (server-side via overrides JSON)
     [Documentation]    same as "Python" but changing the defaults in server specification via `overrides.json`
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics    Python    style.py    pylsp-with-override-json
     ...    settings=100
     ...    before=undefined name 'foo' (pyflakes)
@@ -35,6 +37,7 @@ Python (server-side via overrides JSON)
 
 Python (server-side via spec)
     [Documentation]    same as "Python" but changing the defaults in server specification via `workspace_configuration`
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics    Python    style.py    pylsp-with-override-spec
     ...    settings=100
     ...    before=undefined name 'foo' (pyflakes)
@@ -51,6 +54,7 @@ YAML
 
 Markdown
     [Documentation]    different englishes spell colou?r differently
+    [Tags]    gh:1111
     Settings Should Change Editor Diagnostics
     ...    Markdown
     ...    example.md
@@ -61,7 +65,7 @@ Markdown
 
 LaTeX
     [Documentation]    diagnostics only appear if configured
-    [Tags]    language:latex
+    [Tags]    language:latex    gh:1111
     ${needs reload} =    Set Variable    "${OS}" == "Windows"
     Settings Should Change Editor Diagnostics    LaTeX    example.tex    texlab
     ...    {"chktex.onOpenAndSave": true, "chktex.onEdit": true}

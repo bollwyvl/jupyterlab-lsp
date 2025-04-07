@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from ..paths import file_uri_to_path, is_relative, normalized_uri
+from jupyter_lsp.paths import file_uri_to_path, is_relative, normalized_uri
 
 WIN = platform.system() == "Windows"
 HOME = pathlib.Path("~").expanduser()

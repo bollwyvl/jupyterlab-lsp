@@ -74,6 +74,7 @@ Python (pyright)
     ...    Jump to Definition=${def}
 
 R
+    [Tags]    ls:r-language-server
     ${def} =    Set Variable    lastToken:fib
     Editor Shows Features for Language    R    example.R    Diagnostics=Put spaces around all infix operators
     ...    Jump to Definition=${def}

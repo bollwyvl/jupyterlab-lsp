@@ -5,7 +5,7 @@ from time import sleep
 from warnings import warn
 
 HERE = Path(__file__).parent
-EXAMPLE = HERE.parent / "atest/examples/example.tex"
+EXAMPLE = HERE.parent / "atest/_examples/example.tex"
 ATTEMPTS = 3
 SLEEP = 5
 

@@ -159,7 +159,7 @@ def setup_shadow_filesystem(virtual_documents_uri: str):
             except (OSError, PermissionError, FileNotFoundError) as e:
                 failures.append(e)
                 if len(failures) == 3:
-                    manager.log.warn(
+                    manager.log.warning(
                         "[lsp] initialization of shadow filesystem failed three times"
                         " check if the path set by `LanguageServerManager.virtual_documents_dir`"
                         " or `JP_LSP_VIRTUAL_DIR` is correct; if this is happening with a server"
@@ -196,7 +196,7 @@ def setup_shadow_filesystem(virtual_documents_uri: str):
             changes = message["params"]["contentChanges"]
 
         if len(changes) > 1:
-            manager.log.warn(  # pragma: no cover
+            manager.log.warning(  # pragma: no cover
                 "LSP warning: up to one change supported for textDocument/didChange"
             )
 

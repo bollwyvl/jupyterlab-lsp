@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .conftest import MockServerApp
 
 
-def test_serverextension_path(app):
+def test_serverextension_path(app: MockServerApp):
     import jupyter_lsp
 
     paths = jupyter_lsp._jupyter_server_extension_paths()
@@ -9,9 +15,12 @@ def test_serverextension_path(app):
         assert __import__(path["module"])
 
 
-def test_serverextension(app):
+def test_serverextension(app: MockServerApp):
     app.initialize(
-        ["--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}"]
+        argv=[
+            "--log-level=DEBUG",
+            # "--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}"
+        ]
     )
     assert app.language_server_manager
     found_lsp = False
@@ -23,27 +32,34 @@ def test_serverextension(app):
     assert found_lsp, "apparently didn't install the /lsp/ route"
 
 
-def test_default_virtual_documents_dir(app):
+def test_default_virtual_documents_dir(app: MockServerApp):
     app.initialize(
-        ["--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}"]
+        argv=[
+            "--log-level=DEBUG",
+            # "--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}"
+        ]
     )
     assert app.language_server_manager.virtual_documents_dir == ".virtual_documents"
 
 
-def test_virtual_documents_dir_config(app):
+def test_virtual_documents_dir_config(app: MockServerApp):
     custom_dir = ".custom_virtual_dir"
     app.initialize(
-        [
-            "--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}",
-            "--ServerApp.LanguageServerManager.virtual_documents_dir=" + custom_dir,
+        argv=[
+            "--log-level=DEBUG",
+            # "--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}",
+            f"--ServerApp.LanguageServerManager.virtual_documents_dir={custom_dir}",
         ]
     )
     assert app.language_server_manager.virtual_documents_dir == custom_dir
 
 
-def test_virtual_documents_dir_env(app):
+def test_virtual_documents_dir_env(app: MockServerApp):
     os.environ["JP_LSP_VIRTUAL_DIR"] = custom_dir = ".custom_virtual_dir"
     app.initialize(
-        ["--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}"]
+        argv=[
+            "--log-level=DEBUG",
+            # "--ServerApp.jpserver_extensions={'jupyter_lsp.serverextension': True}"
+        ]
     )
     assert app.language_server_manager.virtual_documents_dir == custom_dir

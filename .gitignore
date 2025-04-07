@@ -6,6 +6,7 @@ build/
 dist/
 lib/
 *.egg-info/
+python_packages/*/*-*/
 
 # Sphinx documentation
 docs/_build/

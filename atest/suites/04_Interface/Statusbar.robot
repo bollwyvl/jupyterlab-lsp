@@ -27,6 +27,7 @@ Troubleshooting And Help Is Offered For Known Non-Installed Servers
     [Documentation]    When specification of a language server has been configured
     ...    or provided, but the server is not installed (or detected) the user
     ...    should get help on installation and/or troubleshooting
+    [Tags]    gh:1111
     Prepare File for Editing    Python    status    example.klingon
     Wait Until Element Contains    ${STATUSBAR}    Initialized (additional servers needed)    timeout=60s
     Click Element    ${STATUSBAR}

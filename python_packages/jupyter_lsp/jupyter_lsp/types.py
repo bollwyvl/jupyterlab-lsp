@@ -1,5 +1,4 @@
-""" API used by spec finders and manager
-"""
+"""API used by spec finders and manager"""
 
 import asyncio
 import enum
@@ -102,7 +101,7 @@ class MessageListener(object):
                 manager=manager,
             )
         except Exception:  # pragma: no cover
-            manager.log.warn(
+            manager.log.warning(
                 "[lsp] error in listener %s for message %s",
                 self.listener,
                 message,
@@ -249,7 +248,7 @@ class LanguageServerManagerAPI(LoggingConfigurable, HasListeners):
                 .strip()
             )
         except Exception as e:  # pragma: no cover
-            self.log.warn(f"Could not determine npm prefix: {e}")
+            self.log.warning("Could not determine npm prefix: %s", e)
 
     @default("node_roots")
     def _default_node_roots(self):

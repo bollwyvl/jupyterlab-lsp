@@ -1,5 +1,4 @@
-""" A session for managing a language server process
-"""
+"""A session for managing a language server process"""
 
 import asyncio
 import atexit
@@ -103,6 +102,7 @@ class LanguageServerSession(LoggingConfigurable):
 
         if self.process:
             self.process.terminate()
+            self.process.wait()
             self.process = None
         if self.reader:
             self.reader.close()

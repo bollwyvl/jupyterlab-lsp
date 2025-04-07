@@ -1,21 +1,21 @@
 """Integration tests of authorization running under jupyter-server."""
 
+from __future__ import annotations
+
 import json
 import os
-import socket
 import subprocess
 import sys
 import time
 import uuid
-from typing import Generator, Optional, Tuple
+from typing import Iterator, Optional, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 import pytest
 
-from .conftest import KNOWN_SERVERS, extra_node_roots
+from .conftest import KNOWN_SERVERS, LOCALHOST, extra_node_roots
 
-LOCALHOST = "127.0.0.1"
 REST_ROUTES = ["/lsp/status"]
 WS_ROUTES = [f"/lsp/ws/{ls}" for ls in KNOWN_SERVERS]
 SUBPROCESS_PREFIX = json.loads(
@@ -49,13 +49,12 @@ def test_auth_websocket(route: str, a_server_url_and_token: Tuple[str, str]) -> 
     verify_response(a_server_url_and_token[0], route)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def a_server_url_and_token(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> Generator[Tuple[str, str], None, None]:
+    tmp_path_factory: pytest.TempPathFactory, unused_port: int
+) -> Iterator[Tuple[str, str]]:
     """Start a temporary, isolated jupyter server."""
     token = str(uuid.uuid4())
-    port = get_unused_port()
 
     root_dir = tmp_path_factory.mktemp("root_dir")
     home = tmp_path_factory.mktemp("home")
@@ -72,7 +71,12 @@ def a_server_url_and_token(
     }
 
     server_conf.write_text(json.dumps(config_data), encoding="utf-8")
-    args = [*SUBPROCESS_PREFIX, "jupyter_server", f"--port={port}", "--no-browser"]
+    args = [
+        *SUBPROCESS_PREFIX,
+        "jupyter_server",
+        f"--port={unused_port}",
+        "--no-browser",
+    ]
     print("server args", args)
     env = dict(os.environ)
     env.update(
@@ -80,44 +84,34 @@ def a_server_url_and_token(
         USERPROFILE=str(home),
         JUPYTER_CONFIG_DIR=str(server_conf.parent),
     )
-    proc = subprocess.Popen(args, cwd=str(root_dir), env=env, stdin=subprocess.PIPE)
-    url = f"http://{LOCALHOST}:{port}"
-    retries = 20
-    ok = False
-    while not ok and retries:
+    with subprocess.Popen(
+        args, cwd=str(root_dir), env=env, stdin=subprocess.PIPE
+    ) as proc:
+        url = f"http://{LOCALHOST}:{unused_port}"
+        retries = 20
+        ok = False
+        while not ok and retries:
+            try:
+                with urlopen(f"{url}/favicon.ico"):
+                    ok = True
+            except URLError:
+                print(f"[{retries} / 20] ...", flush=True)
+                retries -= 1
+                time.sleep(1)
+        if not ok:  # pragma: no cover
+            raise RuntimeError("the server did not start")
+        yield url, token
         try:
-            ok = urlopen(f"{url}/favicon.ico")
-        except URLError:
-            print(f"[{retries} / 20] ...", flush=True)
-            retries -= 1
-            time.sleep(1)
-    if not ok:  # pragma: no cover
-        raise RuntimeError("the server did not start")
-    yield url, token
-    try:
-        print("shutting down with API...")
-        urlopen(f"{url}/api/shutdown?token={token}", data=[])
-    except URLError:  # pragma: no cover
-        print("shutting down the hard way...")
-        proc.terminate()
-        proc.communicate(b"y\n")
-        proc.wait()
-        proc.kill()
-    proc.wait()
+            print("shutting down with API...")
+            with urlopen(f"{url}/api/shutdown?token={token}", data=[]):
+                print("... shut down OK")
+        except URLError:  # pragma: no cover
+            print("shutting down the hard way...")
+            proc.terminate()
+            proc.communicate(b"y\n")
+            proc.wait()
+            proc.kill()
     assert proc.returncode is not None, "jupyter-server probably still running"
-
-
-def get_unused_port():
-    """Get an unused port by trying to listen to any random port.
-
-    Probably could introduce race conditions if inside a tight loop.
-    """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((LOCALHOST, 0))
-    sock.listen(1)
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
 
 
 def verify_response(
@@ -128,9 +122,9 @@ def verify_response(
     code = None
     url = f"{base_url}{route}"
     try:
-        res = urlopen(url)
-        code = res.getcode()
-        body = res.read()
+        with urlopen(url) as res:
+            code = res.getcode()
+            body = res.read()
     except HTTPError as err:
         code = err.getcode()
     assert code == expect_code, f"HTTP {code} (not expected {expect_code}) for {url}"

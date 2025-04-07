@@ -32,7 +32,7 @@ Highlights work at the end of a token
     Should Not Highlight Token    gist
 
 Highlights are changed when moving cursor between cells
-    [Documentation]    GH431
+    [Tags]    gh:431    gh:1111
     Enter Cell Editor    1    line=2
     Press Keys    None    END    # cursor after the token in second line (`test|`)
     Should Highlight Token    test

@@ -93,14 +93,14 @@ Invalidates On Focus Loss
     Enter Cell Editor    1    line=2
 
 Uses LSP Completions When Kernel Response Times Out
-    [Tags]    requires:busy-indicator
+    [Tags]    requires:busy-indicator    gh:1111
     Configure JupyterLab Plugin    {"kernelResponseTimeout": 1, "waitForBusyKernel": true}
     ...    plugin id=${COMPLETION PLUGIN ID}
     Should Complete While Kernel Is Busy
 
 Uses LSP Completions When Kernel Is Busy
     [Documentation]    When kernel is not available the best thing is to show some suggestions (LSP) rather than none.
-    [Tags]    requires:busy-indicator
+    [Tags]    requires:busy-indicator    gh:1111
     Configure JupyterLab Plugin    {"kernelResponseTimeout": -1, "waitForBusyKernel": false}
     ...    plugin id=${COMPLETION PLUGIN ID}
     Should Complete While Kernel Is Busy
@@ -141,6 +141,7 @@ Works In File Editor
     [Teardown]    Clean Up After Working With File    completion.py
 
 Completes In Strings Or Python Dictionaries
+    [Tags]    gh:1111
     [Setup]    Prepare File for Editing    Python    completion    completion.py
     Place Cursor In File Editor At    16    0
     Wait Until Fully Initialized
@@ -232,6 +233,7 @@ Completion Works For Tokens Separated By Space
 
 Kernel And LSP Completions Merge Prefix Conflicts Are Resolved
     [Documentation]    Reconciliate Python kernel returning prefixed completions and LSP (pylsp) not-prefixed ones
+    [Tags]    gh:1111
     Configure JupyterLab Plugin    {"kernelResponseTimeout": -1, "waitForBusyKernel": false}
     ...    plugin id=${COMPLETION PLUGIN ID}
     # For more details see: https://github.com/jupyter-lsp/jupyterlab-lsp/issues/30#issuecomment-576003987
@@ -307,6 +309,7 @@ Works With Incorrect Theme
     Wait Until Page Contains Element    ${COMPLETER_BOX} .jp-Completer-monogram
 
 Completes Correctly With R Double And Triple Colon
+    [Tags]    gh:1111    ls:r-language-server
     [Setup]    Prepare File for Editing    R    completion    completion.R
     Place Cursor In File Editor At    2    7
     Wait Until Fully Initialized
@@ -324,6 +327,7 @@ Completes Correctly With R Double And Triple Colon
     [Teardown]    Clean Up After Working With File    completion.R
 
 Completes Large Namespaces
+    [Tags]    ls:r-language-server
     [Setup]    Prepare File for Editing    R    completion    completion.R
     Place Cursor In File Editor At    6    7
     Wait Until Fully Initialized
@@ -332,6 +336,7 @@ Completes Large Namespaces
     [Teardown]    Clean Up After Working With File    completion.R
 
 Shows Documentation With CompletionItem Resolve
+    [Tags]    ls:r-language-server
     [Setup]    Prepare File for Editing    R    completion    completion.R
     Configure JupyterLab Plugin    {"showDocumentationPanel": true}    plugin id=${MANAGER PLUGIN ID}
     Place Cursor In File Editor At    8    7
@@ -351,6 +356,7 @@ Shows Documentation With CompletionItem Resolve
 Shows Only Relevant Suggestions In Known Magics
     # https://github.com/jupyter-lsp/jupyterlab-lsp/issues/559
     # h<tab>
+    [Tags]    gh:1111
     Enter Cell Editor    20    line=2
     Trigger Completer
     Completer Should Suggest    help
@@ -358,6 +364,7 @@ Shows Only Relevant Suggestions In Known Magics
     Completer Should Suggest    hash
 
 Completes In R Magics
+    [Tags]    gh:1111    ls:r-language-server
     # Proper completion in R magics needs to be tested as:
     # - R magic extractor uses a tailor-made replacer function, not tested elsewhere
     # - R lanugage server is very sensitive to off-by-one errors (see https://github.com/REditorSupport/languageserver/issues/395)
@@ -376,6 +383,7 @@ Completes In R Magics
     Completer Should Suggest    library
 
 Completes Paths In Strings
+    [Tags]    gh:1111
     Enter Cell Editor    26
     Wait For Our Completer To Initialize
     Press Keys    None    LEFT

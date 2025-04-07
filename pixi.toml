@@ -721,9 +721,13 @@ jupyterlab = ">=4.1,<5.0"
 jupyterlab = "4.1.*"
 [feature.deps-lab-now.dependencies]
 jupyterlab = "4.3.*"
-[feature.deps-lab-pre.dependencies.jupyterlab]
-channel = "conda-forge/label/jupyterlab_rc"
-version = ">=4.4.0rc1"
+[feature.deps-lab-pre.dependencies]
+jupyterlab = "4.4.*"
+# to add a pre-release, use something like:
+#
+#  [feature.deps-lab-pre.dependencies.jupyterlab]
+#  channel = "conda-forge/label/jupyterlab_alpha"
+#  version = ">=4.5.0a0"
 
 [feature.deps-run-srv.dependencies]
 jupyter_server = ">=1.1.2"
@@ -979,8 +983,10 @@ channels = [
   # always conda-forge first
   "conda-forge",
   # ... required for specific features
-  "conda-forge/label/jupyterlab_rc",
   "conda-forge/label/notebook_rc",
+  # restore more pre-release channels, as needed, that match feature dependencies:
+  #
+  #   "conda-forge/label/jupyterlab_alpha",
 ]
 name = "jp-lsp"
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
